@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="docTitle">Controler Bluetooth</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-dark: #1e293b;
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --accent: #3b82f6;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+
+    body.light-theme {
+      --bg-dark: #f1f5f9;
+      --panel-dark: #ffffff;
+      --text-color: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-color);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- LOCK SCREEN --- */
+    #lock-screen {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .lock-card {
+      background: var(--panel-dark);
+      padding: 2.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      width: 320px;
+    }
+
+    .lock-card input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-dark);
+      color: var(--text-color);
+      text-align: center;
+      font-size: 1.2rem;
+      letter-spacing: 4px;
+      margin: 1rem 0;
+    }
+
+    /* --- LAYOUT UTAMA --- */
+    #app-container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      filter: blur(8px);
+      pointer-events: none;
+    }
+
+    #app-container.unlocked {
+      filter: blur(0);
+      pointer-events: auto !important;
+    }
+
+    /* --- NAVBAR KIRI --- */
+    .sidebar {
+      width: 250px;
+      background: var(--panel-dark);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      gap: 1rem;
+      z-index: 10;
+    }
+
+    .profile-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent);
+    }
+
+    .role-badge {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      width: fit-content;
+      margin-top: 2px;
+    }
+    .role-dev { background: var(--accent); color: white; }
+    .role-user { background: var(--warning); color: black; }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 12px;
+      text-align: left;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      width: 100%;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* --- MAIN CONTENT --- */
+    .main-content {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--panel-dark);
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      user-select: none;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.96); }
+    .btn-danger { background: var(--danger); }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 0.8rem;
+    }
+    .btn-success { background: var(--success); }
+
+    .page { display: none; }
+    .page.active { display: block !important; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 1rem;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      background: var(--bg-dark);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+
+    .widget-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .widget-card {
+      background: var(--panel-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      position: relative;
+    }
+
+    .widget-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sensor-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+    /* CONTROLLER ROBOT */
+    .d-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      grid-template-rows: repeat(3, 80px);
+      gap: 10px;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .d-pad .btn {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* --- SYSTEM ACTIVITY PANEL --- */
+    .activity-panel {
+      width: 310px;
+      background: var(--panel-dark);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+
+    .activity-logs {
+      height: 480px;
+      background: var(--bg-dark);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      padding: 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .log-card {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      line-height: 1.3;
+      border-left: 4px solid var(--accent);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .log-card.log-info { border-left-color: var(--accent); }
+    .log-card.log-success { border-left-color: var(--success); }
+    .log-card.log-error { 
+      border-left-color: var(--danger); 
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+      cursor: pointer;
+    }
+    .log-card.log-warning { 
+      border-left-color: var(--warning); 
+      background: rgba(245, 158, 11, 0.1);
+      cursor: pointer;
+    }
+
+    /* MODAL POPUP ERROR DETAILS */
+    #errorModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    }
+
+    .modal-box {
+      background: var(--panel-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 450px;
+      max-width: 90vw;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--danger);
+      margin-bottom: 1rem;
+    }
+
+    .modal-section {
+      background: var(--bg-dark);
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+
+    /* SWITCH CUSTOM */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider-toggle {
+      position: absolute; cursor: pointer; inset: 0;
+      background-color: #ccc; transition: .4s; border-radius: 34px;
+    }
+    .slider-toggle:before {
+      position: absolute; content: ""; height: 18px; width: 18px;
+      left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider-toggle { background-color: var(--accent); }
+    input:checked + .slider-toggle:before { transform: translateX(24px); }
+
+    /* --- TEACHABLE MACHINE STYLES --- */
+    .tm-webcam-container {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      background: var(--bg-dark);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      position: relative;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tm-webcam-container canvas {
+      width: 100% !important;
+      height: auto !important;
+      display: block;
+    }
+    .tm-placeholder {
+      color: var(--text-muted);
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.95rem;
+    }
+    .tm-prediction-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 1rem;
+    }
+    .tm-pred-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: var(--bg-dark);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 0.95rem;
+    }
+    .tm-pred-item.active {
+      border-color: var(--success);
+      background: rgba(16, 185, 129, 0.1);
+    }
+    .tm-pred-item.low {
+      border-color: var(--warning);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .tm-confidence {
+      font-weight: bold;
+      color: var(--accent);
+    }
+    .tm-confidence.high { color: var(--success); }
+    .tm-confidence.low { color: var(--warning); }
+    .tm-status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    .tm-status-idle { background: var(--border-color); color: var(--text-muted); }
+    .tm-status-loading { background: var(--warning); color: #000; }
+    .tm-status-ready { background: var(--success); color: #fff; }
+    .tm-status-error { background: var(--danger); color: #fff; }
+    .tm-last-sent {
+      margin-top: 1rem;
+      padding: 12px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      text-align: center;
+    }
+    .tm-last-sent .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .tm-last-sent .value {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LAYAR KUNCI -->
+  <div id="lock-screen">
+    <div class="lock-card">
+      <h2 id="lockWebTitle">Controler Bluetooth</h2>
+      <p style="color: var(--text-muted);">Masukkan Password Akses</p>
+      <input type="password" id="pinInput" placeholder="••••••" onkeydown="if(event.key==='Enter') unlockWebsite()">
+      <button class="btn" style="width: 100%;" onclick="unlockWebsite()">Buka Kunci</button>
+    </div>
+  </div>
+
+  <!-- CONTAINER APLIKASI -->
+  <div id="app-container">
+    
+    <!-- NAVBAR KIRI -->
+    <div class="sidebar">
+      <div class="profile-card">
+        <img id="userImgNav" src="Membawa Sajam.jpg" class="profile-img" alt="Foto Profil">
+        <div class="profile-info">
+          <span id="userNameNav" style="font-weight: bold; font-size: 0.95rem;">Pengguna</span>
+          <span id="userRoleBadge" class="role-badge role-user">User</span>
+        </div>
+      </div>
+
+      <h2 id="webTitleNav" style="font-size: 1.1rem; color: var(--accent);">Controler Bluetooth</h2>
+      
+      <button class="nav-btn active" onclick="switchPage('dashboard')">📊 Dashboard</button>
+      <button class="nav-btn" onclick="switchPage('builder')">🛠️ Widget Builder</button>
+      <button class="nav-btn" onclick="switchPage('controller')">🎮 Controller</button>
+      <button class="nav-btn" onclick="switchPage('teachable')">🤖 Teachable Machine</button>
+      <button id="navSettingBtn" class="nav-btn" onclick="switchPage('setting')">⚙️ Settings</button>
+
+      <div style="margin-top: auto;">
+        <button class="btn btn-danger" style="width: 100%;" onclick="lockWebsite()">🔒 Kunci Web</button>
+      </div>
+    </div>
+
+    <!-- UTAMA -->
+    <div class="main-content">
+      <div class="top-bar">
+        <div>
+          <span id="statusText" style="font-weight: bold; color: var(--danger);">Status: Terputus</span>
+        </div>
+        <button id="connectBtn" class="btn">Hubungkan Bluetooth</button>
+      </div>
+
+      <!-- PAGE: DASHBOARD -->
+      <div id="dashboard" class="page active">
+        <h2 style="margin-bottom: 1rem;">Dashboard Monitor & Control</h2>
+        <div id="dashboardWidgets" class="widget-grid">
+          
+          <div class="widget-card">
+            <h3>Status Sistem</h3>
+            <p style="color: var(--text-muted);">Sistem siap menerima & mengirim data ke Micro:bit. Silakan buat widget Input/Output di Widget Builder.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PAGE: BUILDER -->
+      <div id="builder" class="page">
+        <h2 style="margin-bottom: 1rem;">Widget Builder</h2>
+        <div class="widget-card" style="max-width: 500px;">
+          <div class="form-group">
+            <label>Kategori Widget:</label>
+            <select id="builderCategory" class="form-control">
+              <option value="input">Input (Micro:bit ➔ Website / Sensor)</option>
+              <option value="output">Output (Website ➔ Micro:bit / Kontrol)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data Key (Kunci Serial):</label>
+            <input type="text" id="builderKey" class="form-control" placeholder="Contoh: suhu, kelembapan, lampu">
+          </div>
+          <div class="form-group">
+            <label>Widget Name (Nama Tampilan):</label>
+            <input type="text" id="builderName" class="form-control" placeholder="Contoh: Suhu Ruangan">
+          </div>
+          <button class="btn" style="margin-top: 10px;" onclick="createCustomWidget()">+ Buat Widget</button>
+        </div>
+      </div>
+
+      <!-- PAGE: CONTROLLER (Roblox-Style Hold Control) -->
+      <div id="controller" class="page">
+        <h2 style="margin-bottom: 1rem;">Robot Controller</h2>
+        <div class="widget-card" style="align-items: center; max-width: 450px; margin: 0 auto;">
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 1rem;">
+            <span>Gunakan Mode Keyboard (WASD):</span>
+            <label class="switch">
+              <input type="checkbox" id="wasdToggle">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+
+          <!-- D-Pad dengan Sinyal Tahan (Hold) dan Lepas (Release) -->
+          <div class="d-pad">
+            <div></div>
+            <button class="btn" 
+                    onmousedown="sendBLEData('up')" 
+                    onmouseup="sendBLEData('stop')" 
+                    onmouseleave="sendBLEData('stop')"
+                    ontouchstart="sendBLEData('up'); event.preventDefault();" 
+                    ontouchend="sendBLEData('stop'); event.preventDefault();">▲</button>
+            <div></div>
+
+            <button class="btn" 
+                    onmousedown="sendBLEData('left')" 
+                    onmouseup="sendBLEData('stop')" 
+                    onmouseleave="sendBLEData('stop')"
+                    ontouchstart="sendBLEData('left'); event.preventDefault();" 
+                    ontouchend="sendBLEData('stop'); event.preventDefault();">◄</button>
+
+            <button class="btn btn-danger" onclick="sendBLEData('stop')">■</button>
+
+            <button class="btn" 
+                    onmousedown="sendBLEData('right')" 
+                    onmouseup="sendBLEData('stop')" 
+                    onmouseleave="sendBLEData('stop')"
+                    ontouchstart="sendBLEData('right'); event.preventDefault();" 
+                    ontouchend="sendBLEData('stop'); event.preventDefault();">►</button>
+            <div></div>
+
+            <button class="btn" 
+                    onmousedown="sendBLEData('back')" 
+                    onmouseup="sendBLEData('stop')" 
+                    onmouseleave="sendBLEData('stop')"
+                    ontouchstart="sendBLEData('back'); event.preventDefault();" 
+                    ontouchend="sendBLEData('stop'); event.preventDefault();">▼</button>
+            <div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: TEACHABLE MACHINE -->
+      <div id="teachable" class="page">
+        <h2 style="margin-bottom: 1rem;">Teachable Machine</h2>
+        
+        <div class="widget-card" style="max-width: 520px; margin: 0 auto;">
+          <div class="form-group">
+            <label>Link Model Teachable Machine:</label>
+            <input type="text" id="tmModelUrl" class="form-control" 
+                   placeholder="https://teachablemachine.withgoogle.com/models/xxxxx/">
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+              Export model dari Teachable Machine → Upload model → salin link-nya
+            </p>
+          </div>
+          
+          <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+            <button class="btn" id="tmLoadBtn" onclick="loadTeachableModel()" style="flex: 1;">
+              🚀 Load Model & Kamera
+            </button>
+            <button class="btn btn-danger" id="tmStopBtn" onclick="stopTeachableModel()" style="display: none;">
+              ⏹ Stop
+            </button>
+          </div>
+
+          <div style="text-align: center; margin-bottom: 1rem;">
+            <span id="tmStatusBadge" class="tm-status-badge tm-status-idle">Belum dimuat</span>
+          </div>
+
+          <div class="tm-webcam-container" id="tmWebcamContainer">
+            <div class="tm-placeholder" id="tmPlaceholder">
+              Masukkan link model lalu tekan<br><strong>Load Model & Kamera</strong>
+            </div>
+          </div>
+
+          <div id="tmPredictionList" class="tm-prediction-list"></div>
+
+          <div class="tm-last-sent" id="tmLastSentBox" style="display: none;">
+            <div class="label">Data terakhir dikirim ke Micro:bit (≥85%)</div>
+            <div class="value" id="tmLastSentValue">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: SETTINGS -->
+      <div id="setting" class="page">
+        <h2 style="margin-bottom: 1rem;">Website Settings</h2>
+        <div class="widget-card" style="max-width: 500px;">
+          <div class="form-group">
+            <label>Tema Website:</label>
+            <select id="settingTheme" class="form-control" onchange="changeTheme(this.value)">
+              <option value="dark">Dark Mode</option>
+              <option value="light">White/Light Mode</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Nama Website:</label>
+            <input type="text" id="settingWebTitle" class="form-control">
+          </div>
+          <button class="btn" onclick="saveSettings()">Simpan Pengaturan</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ACTIVITY PANEL -->
+    <div class="activity-panel">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3>System Activity</h3>
+        <button onclick="clearLogs()" style="background:none; border:none; color: var(--text-muted); cursor:pointer; font-size:0.8rem;">Bersihkan</button>
+      </div>
+      <div id="activityLogs" class="activity-logs">
+        <div class="log-card log-info">System siap digunakan</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL BANTUAN ERROR OTOMATIS -->
+  <div id="errorModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span style="font-size: 1.5rem;">⚠️</span>
+        <h3 id="modalTitle">Penjelasan Kesalahan</h3>
+      </div>
+      <div class="modal-section">
+        <strong style="color: var(--danger);">Apa yang salah:</strong>
+        <p id="modalReason" style="margin-top: 4px; color: var(--text-muted);"></p>
+      </div>
+      <div class="modal-section">
+        <strong style="color: var(--success);">Cara Memperbaikinya:</strong>
+        <p id="modalSolution" style="margin-top: 4px; white-space: pre-line;"></p>
+      </div>
+      <button class="btn" style="width: 100%; margin-top: 5px;" onclick="closeErrorModal()">Tutup & Mengerti</button>
+    </div>
+  </div>
+
+  <script>
+    let appConfig = {
+      devPin: "010820",
+      userPin: "12345",
+      webTitle: "Controler Bluetooth",
+      devUserName: "GUA DEVLOP",
+      devUserImg: "download (87).jpg",
+      userUserName: "user biasa",
+      userUserImg: "Membawa Sajam.jpg",
+      theme: "dark"
+    };
+
+    let currentUserRole = "";
+
+    function unlockWebsite() {
+      const inputPass = document.getElementById('pinInput').value;
+      if (inputPass === appConfig.devPin) {
+        currentUserRole = "dev";
+        applyRolePermissions();
+        openApp("Login sebagai Developer");
+      } else if (inputPass === appConfig.userPin) {
+        currentUserRole = "user";
+        applyRolePermissions();
+        openApp("Login sebagai User");
+      } else {
+        alert("Password Salah!");
+        addLog("Akses ditolak: Password Salah", "error");
+      }
+    }
+
+    function openApp(logMsg) {
+      document.getElementById('lock-screen').style.display = 'none';
+      document.getElementById('app-container').classList.add('unlocked');
+      addLog(logMsg, "success");
+    }
+
+    function lockWebsite() {
+      document.getElementById('pinInput').value = '';
+      document.getElementById('lock-screen').style.display = 'flex';
+      document.getElementById('app-container').classList.remove('unlocked');
+      currentUserRole = "";
+      addLog("Layar dikunci", "warning");
+    }
+
+    function applyRolePermissions() {
+      const badge = document.getElementById('userRoleBadge');
+      const settingNav = document.getElementById('navSettingBtn');
+      const userNameDisplay = document.getElementById('userNameNav');
+      const userImgDisplay = document.getElementById('userImgNav');
+
+      if (currentUserRole === "dev") {
+        badge.innerText = "Developer";
+        badge.className = "role-badge role-dev";
+        userNameDisplay.innerText = appConfig.devUserName;
+        userImgDisplay.src = appConfig.devUserImg;
+        settingNav.style.display = "block";
+      } else {
+        badge.innerText = "User";
+        badge.className = "role-badge role-user";
+        userNameDisplay.innerText = appConfig.userUserName;
+        userImgDisplay.src = appConfig.userUserImg;
+        settingNav.style.display = "none";
+        switchPage('dashboard');
+      }
+    }
+
+    // --- NAVIGASI HALAMAN ---
+    function switchPage(pageId) {
+      if (pageId === 'setting' && currentUserRole !== 'dev') {
+        alert("Akses Ditolak! Fitur ini khusus Developer.");
+        return;
+      }
+
+      const allPages = document.querySelectorAll('.page');
+      allPages.forEach(p => p.classList.remove('active'));
+
+      const allNavBtns = document.querySelectorAll('.nav-btn');
+      allNavBtns.forEach(b => b.classList.remove('active'));
+      
+      const targetPage = document.getElementById(pageId);
+      if (targetPage) {
+        targetPage.classList.add('active');
+      }
+
+      const activeBtn = Array.from(allNavBtns).find(b => {
+        const attr = b.getAttribute('onclick');
+        return attr && attr.includes(`'${pageId}'`);
+      });
+      if (activeBtn) activeBtn.classList.add('active');
+
+      addLog(`Membuka halaman: ${pageId}`, "info");
+    }
+
+    // --- LOGS & UTILS ---
+    function addLog(message, type = "info", errorDetail = null) {
+      const logsContainer = document.getElementById('activityLogs');
+      const logCard = document.createElement('div');
+      logCard.className = `log-card log-${type}`;
+      logCard.innerText = message;
+
+      if (errorDetail) {
+        logCard.onclick = () => showErrorDetails(errorDetail);
+      }
+
+      logsContainer.appendChild(logCard);
+      logsContainer.scrollTop = logsContainer.scrollHeight;
+    }
+
+    function clearLogs() {
+      const now = new Date();
+      const jam = String(now.getHours()).padStart(2, '0');
+      const menit = String(now.getMinutes()).padStart(2, '0');
+      const detik = String(now.getSeconds()).padStart(2, '0');
+      
+      const timeString = `${jam}:${menit}:${detik}`;
+      document.getElementById('activityLogs').innerHTML = `<div class="log-card log-info">Log dibersihkan pada ${timeString}</div>`;
+    }
+
+    function showErrorDetails(detail) {
+      document.getElementById('modalTitle').innerText = detail.title || "Detail Kesalahan";
+      document.getElementById('modalReason').innerText = detail.reason || "-";
+      document.getElementById('modalSolution').innerText = detail.solution || "-";
+      document.getElementById('errorModal').style.display = "flex";
+    }
+
+    function closeErrorModal() {
+      document.getElementById('errorModal').style.display = "none";
+    }
+
+    function changeTheme(theme) {
+      appConfig.theme = theme;
+      if (theme === 'light') document.body.classList.add('light-theme');
+      else document.body.classList.remove('light-theme');
+    }
+
+    function saveSettings() {
+      const newTitle = document.getElementById('settingWebTitle').value.trim();
+      if (newTitle) appConfig.webTitle = newTitle;
+      document.getElementById('webTitleNav').innerText = appConfig.webTitle;
+      document.getElementById('docTitle').innerText = appConfig.webTitle;
+      document.getElementById('lockWebTitle').innerText = appConfig.webTitle;
+      addLog("Pengaturan disimpan", "success");
+      alert("Pengaturan Berhasil Disimpan!");
+    }
+
+    // MEMBUAT WIDGET INPUT/OUTPUT KE DASHBOARD
+    function createCustomWidget() {
+      const name = document.getElementById('builderName').value.trim();
+      const key = document.getElementById('builderKey').value.trim();
+      const category = document.getElementById('builderCategory').value;
+
+      if (!name || !key) {
+        alert("Lengkapi nama dan data key terlebih dahulu!");
+        return;
+      }
+
+      const grid = document.getElementById('dashboardWidgets');
+      const card = document.createElement('div');
+      card.className = "widget-card";
+
+      if (category === "input") {
+        card.innerHTML = `
+          <div class="widget-header">
+            <h3>${name} (Input)</h3>
+            <button class="btn btn-danger btn-sm" onclick="removeWidget(this, '${name}')">🗑️ Hapus</button>
+          </div>
+          <div id="widget_val_${key}" class="sensor-value">--</div>
+          <p style="color: var(--text-muted); font-size:0.85rem;">Menerima data '${key}' dari Micro:bit</p>
+        `;
+      } else {
+        card.innerHTML = `
+          <div class="widget-header">
+            <h3>${name} (Output)</h3>
+            <button class="btn btn-danger btn-sm" onclick="removeWidget(this, '${name}')">🗑️ Hapus</button>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="btn" onclick="sendBLEData('${key},1')">Nyalakan / Send 1</button>
+            <button class="btn btn-danger" onclick="sendBLEData('${key},0')">Matikan / Send 0</button>
+          </div>
+        `;
+      }
+
+      grid.appendChild(card);
+      addLog(`Widget '${name}' berhasil ditambahkan ke Dashboard`, "success");
+      alert(`Widget '${name}' Berhasil Dibuat dan Muncul di Dashboard!`);
+      
+      document.getElementById('builderName').value = '';
+      document.getElementById('builderKey').value = '';
+    }
+
+    function removeWidget(btnElement, widgetName) {
+      if (confirm(`Apakah Anda yakin ingin menghapus widget "${widgetName}"?`)) {
+        const widgetCard = btnElement.closest('.widget-card');
+        if (widgetCard) {
+          widgetCard.remove();
+          addLog(`Widget '${widgetName}' telah dihapus dari Dashboard`, "warning");
+        }
+      }
+    }
+
+    document.getElementById('settingWebTitle').value = appConfig.webTitle;
+
+    // --- BLUETOOTH CORE ---
+    const UART_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+    const RX_CHARACTERISTIC_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"; // Kirim data (Write)
+    const TX_CHARACTERISTIC_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"; // Menerima data (Notify)
+
+    let bleDevice = null;
+    let rxCharacteristic = null;
+    let txCharacteristic = null;
+
+    const connectBtn = document.getElementById('connectBtn');
+    const statusText = document.getElementById('statusText');
+
+    connectBtn.addEventListener('click', async () => {
+      if (!navigator.bluetooth) {
+        alert("Browser tidak mendukung Web Bluetooth!");
+        addLog("Fitur Bluetooth tidak didukung browser ini", "error");
+        return;
+      }
+
+      if (bleDevice && bleDevice.gatt.connected) {
+        bleDevice.gatt.disconnect();
+        return;
+      }
+
+      try {
+        addLog("Mencari perangkat Bluetooth Micro:bit...", "info");
+        statusText.innerText = "Status: Mencari...";
+
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [
+            { services: [UART_SERVICE_UUID] },
+            { namePrefix: 'BBC micro:bit' },
+            { namePrefix: 'micro:bit' }
+          ],
+          optionalServices: [UART_SERVICE_UUID]
+        });
+
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+        statusText.innerText = "Status: Menghubungkan...";
+        addLog(`Menghubungkan ke ${bleDevice.name || 'Perangkat'}...`, "info");
+
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService(UART_SERVICE_UUID);
+        
+        rxCharacteristic = await service.getCharacteristic(RX_CHARACTERISTIC_UUID);
+
+        try {
+          txCharacteristic = await service.getCharacteristic(TX_CHARACTERISTIC_UUID);
+          await txCharacteristic.startNotifications();
+          txCharacteristic.addEventListener('characteristicvaluechanged', handleIncomingData);
+          addLog("Fitur penerimaan data sensor (Input) aktif", "info");
+        } catch (e) {
+          addLog("Gagal mengaktifkan penerima data sensor (TX Characteristic)", "warning");
+        }
+
+        statusText.innerText = "Status: Terhubung";
+        statusText.style.color = "var(--success)";
+        connectBtn.innerText = "Putuskan Koneksi";
+        connectBtn.style.backgroundColor = "var(--danger)";
+        addLog("Bluetooth Micro:bit Berhasil Terhubung!", "success");
+
+      } catch (error) {
+        statusText.innerText = "Status: Terputus";
+        statusText.style.color = "var(--danger)";
+
+        if (error.name === "NotFoundError") {
+          addLog("Pencarian dibatalkan oleh pengguna", "warning");
+        } else {
+          addLog(`Gagal Koneksi: ${error.message}`, "error");
+        }
+      }
+    });
+
+    function onDisconnected() {
+      statusText.innerText = "Status: Terputus";
+      statusText.style.color = "var(--danger)";
+      connectBtn.innerText = "Hubungkan Bluetooth";
+      connectBtn.style.backgroundColor = "var(--accent)";
+      addLog("Koneksi Bluetooth Terputus!", "warning");
+    }
+
+    function handleIncomingData(event) {
+      const decoder = new TextDecoder('utf-8');
+      const receivedString = decoder.decode(event.target.value).trim();
+      
+      addLog(`Data Masuk (Micro:bit): ${receivedString}`, "info");
+
+      if (receivedString.includes(':')) {
+        const parts = receivedString.split(':');
+        const key = parts[0].trim();
+        const val = parts[1].trim();
+        const customDisplay = document.getElementById(`widget_val_${key}`);
+        if (customDisplay) {
+          customDisplay.innerText = val;
+        }
+      } else {
+        const inputWidgets = document.querySelectorAll('[id^="widget_val_"]');
+        inputWidgets.forEach(w => w.innerText = receivedString);
+      }
+    }
+
+    // KIRIM DATA KE MICRO:BIT
+    async function sendBLEData(command) {
+      if (!rxCharacteristic) {
+        addLog("Bluetooth belum terhubung!", "warning");
+        return;
+      }
+
+      try {
+        const encoder = new TextEncoder();
+        const payload = encoder.encode(command + "\n");
+        
+        if (rxCharacteristic.writeValueWithoutResponse) {
+          await rxCharacteristic.writeValueWithoutResponse(payload);
+        } else {
+          await rxCharacteristic.writeValue(payload);
+        }
+
+        addLog(`Terkirim ke Micro:bit: ${command}`, "success");
+      } catch (err) {
+        addLog(`Gagal mengirim data: ${err.message}`, "error");
+      }
+    }
+
+    // WASD KEYBOARD CONTROLLER (GAME / ROBLOX STYLE)
+    const activeKeys = {};
+
+    document.addEventListener('keydown', (e) => {
+      const wasdActive = document.getElementById('wasdToggle').checked;
+      if (!wasdActive || e.repeat) return;
+
+      const key = e.key.toLowerCase();
+
+      if (!activeKeys[key]) {
+        activeKeys[key] = true;
+
+        if (key === 'w') sendBLEData('up');
+        else if (key === 'a') sendBLEData('left');
+        else if (key === 'd') sendBLEData('right');
+        else if (key === 's') sendBLEData('back');
+        else if (key === ' ') sendBLEData('stop');
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      const wasdActive = document.getElementById('wasdToggle').checked;
+      if (!wasdActive) return;
+
+      const key = e.key.toLowerCase();
+
+      if (activeKeys[key]) {
+        delete activeKeys[key];
+
+        if (['w', 'a', 's', 'd'].includes(key)) {
+          sendBLEData('stop');
+        }
+      }
+    });
+
+    // =====================================================
+    // TEACHABLE MACHINE INTEGRATION (PERBAIKAN URL AUTOMATIC)
+    // =====================================================
+    let tmModel = null;
+    let tmWebcam = null;
+    let tmMaxPredictions = 0;
+    let tmIsRunning = false;
+    let tmLastSentClass = null;          
+    const TM_CONFIDENCE_THRESHOLD = 0.85; 
+
+    function setTmStatus(text, type) {
+      const badge = document.getElementById('tmStatusBadge');
+      badge.innerText = text;
+      badge.className = 'tm-status-badge tm-status-' + type;
+    }
+
+    async function loadTeachableModel() {
+      let url = document.getElementById('tmModelUrl').value.trim();
+      if (!url) {
+        alert("Masukkan link model Teachable Machine terlebih dahulu!");
+        return;
+      }
+
+      if (url.endsWith('/')) {
+        url = url.slice(0, -1);
+      }
+
+      const modelURL = url + "/model.json";
+      const metadataURL = url + "/metadata.json";
+
+      setTmStatus("Memuat model...", "loading");
+      document.getElementById('tmLoadBtn').disabled = true;
+      addLog("Memuat model Teachable Machine...", "info");
+
+      try {
+        if (tmWebcam) {
+          tmWebcam.stop();
+          tmWebcam = null;
+        }
+        tmIsRunning = false;
+
+        tmModel = await tmImage.load(modelURL, metadataURL);
+        tmMaxPredictions = tmModel.getTotalClasses();
+
+        const flip = true;
+        tmWebcam = new tmImage.Webcam(400, 300, flip);
+        await tmWebcam.setup(); 
+        await tmWebcam.play();
+
+        const container = document.getElementById('tmWebcamContainer');
+        container.innerHTML = '';
+        container.appendChild(tmWebcam.canvas);
+
+        const predList = document.getElementById('tmPredictionList');
+        predList.innerHTML = '';
+        for (let i = 0; i < tmMaxPredictions; i++) {
+          const item = document.createElement('div');
+          item.className = 'tm-pred-item';
+          item.id = `tm-pred-${i}`;
+          item.innerHTML = `
+            <span class="tm-class-name">Class ${i}</span>
+            <span class="tm-confidence">0%</span>
+          `;
+          predList.appendChild(item);
+        }
+
+        document.getElementById('tmLastSentBox').style.display = 'block';
+        document.getElementById('tmStopBtn').style.display = 'inline-block';
+        document.getElementById('tmLoadBtn').disabled = false;
+
+        setTmStatus("Aktif - Kamera menyala", "ready");
+        addLog("Model Teachable Machine berhasil dimuat & kamera aktif", "success");
+
+        tmIsRunning = true;
+        tmLastSentClass = null;
+        window.requestAnimationFrame(tmLoop);
+
+      } catch (err) {
+        console.error(err);
+        setTmStatus("Gagal memuat model", "error");
+        document.getElementById('tmLoadBtn').disabled = false;
+        addLog(`Gagal memuat Teachable Machine: ${err.message}`, "error");
+        alert("Gagal memuat model. Pastikan link valid dan model sudah di-export ke cloud.");
+      }
+    }
+
+    function stopTeachableModel() {
+      tmIsRunning = false;
+      if (tmWebcam) {
+        tmWebcam.stop();
+        tmWebcam = null;
+      }
+      document.getElementById('tmWebcamContainer').innerHTML = `
+        <div class="tm-placeholder" id="tmPlaceholder">
+          Kamera dihentikan.<br>Tekan <strong>Load Model & Kamera</strong> untuk memulai lagi.
+        </div>
+      `;
+      document.getElementById('tmPredictionList').innerHTML = '';
+      document.getElementById('tmLastSentBox').style.display = 'none';
+      document.getElementById('tmStopBtn').style.display = 'none';
+      document.getElementById('tmLoadBtn').disabled = false;
+      setTmStatus("Dihentikan", "idle");
+      addLog("Teachable Machine dihentikan", "warning");
+    }
+
+    async function tmLoop() {
+      if (!tmIsRunning || !tmWebcam) return;
+      tmWebcam.update();
+      await tmPredict();
+      window.requestAnimationFrame(tmLoop);
+    }
+
+    async function tmPredict() {
+      if (!tmModel || !tmWebcam) return;
+
+      const prediction = await tmModel.predict(tmWebcam.canvas);
+
+      let bestIndex = 0;
+      let bestProb = 0;
+      for (let i = 0; i < tmMaxPredictions; i++) {
+        if (prediction[i].probability > bestProb) {
+          bestProb = prediction[i].probability;
+          bestIndex = i;
+        }
+      }
+
+      for (let i = 0; i < tmMaxPredictions; i++) {
+        const item = document.getElementById(`tm-pred-${i}`);
+        if (!item) continue;
+
+        const pct = Math.round(prediction[i].probability * 100);
+        item.querySelector('.tm-class-name').innerText = prediction[i].className;
+        const confEl = item.querySelector('.tm-confidence');
+        confEl.innerText = pct + '%';
+
+        item.classList.remove('active', 'low');
+        confEl.classList.remove('high', 'low');
+
+        if (i === bestIndex) {
+          if (bestProb >= TM_CONFIDENCE_THRESHOLD) {
+            item.classList.add('active');
+            confEl.classList.add('high');
+          } else {
+            item.classList.add('low');
+            confEl.classList.add('low');
+          }
+        }
+      }
+
+      const bestClass = prediction[bestIndex].className;
+      if (bestProb >= TM_CONFIDENCE_THRESHOLD) {
+        if (bestClass !== tmLastSentClass) {
+          tmLastSentClass = bestClass;
+          document.getElementById('tmLastSentValue').innerText = bestClass;
+          sendBLEData(bestClass);
+          addLog(`TM (≥85%): "${bestClass}" → dikirim ke Micro:bit`, "success");
+        }
+      }
+    }
+  </script>
+</body>
+</html>
