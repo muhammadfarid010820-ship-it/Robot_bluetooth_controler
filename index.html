@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title id="docTitle">Controler Bluetooth</title>
+  <!-- Library External -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
@@ -348,7 +349,7 @@
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider-toggle {
       position: absolute; cursor: pointer; inset: 0;
-      background-color: #ccc; transition: .4s; border-radius: 34px;
+      background-color: #cbd5e1; transition: .4s; border-radius: 34px;
     }
     .slider-toggle:before {
       position: absolute; content: ""; height: 18px; width: 18px;
@@ -367,7 +368,7 @@
       border: 1px solid var(--border-color);
       overflow: hidden;
       position: relative;
-      min-height: 300px;
+      min-height: 260px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -401,7 +402,7 @@
     }
     .tm-pred-item.active {
       border-color: var(--success);
-      background: rgba(16, 185, 129, 0.1);
+      background: rgba(16, 185, 129, 0.15);
     }
     .tm-pred-item.low {
       border-color: var(--warning);
@@ -442,6 +443,43 @@
       font-weight: bold;
       color: var(--accent);
     }
+
+    /* CONTROL PANEL PANEL TM */
+    .tm-controls-box {
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .tm-toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .tm-slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .tm-slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* CHART CONTAINER */
+    .chart-box {
+      background: var(--panel-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -462,7 +500,7 @@
     <!-- NAVBAR KIRI -->
     <div class="sidebar">
       <div class="profile-card">
-        <img id="userImgNav" src="Membawa Sajam.jpg" class="profile-img" alt="Foto Profil">
+        <img id="userImgNav" src="https://placehold.co/100x100/3b82f6/ffffff?text=User" class="profile-img" alt="Foto Profil">
         <div class="profile-info">
           <span id="userNameNav" style="font-weight: bold; font-size: 0.95rem;">Pengguna</span>
           <span id="userRoleBadge" class="role-badge role-user">User</span>
@@ -494,13 +532,20 @@
       <!-- PAGE: DASHBOARD -->
       <div id="dashboard" class="page active">
         <h2 style="margin-bottom: 1rem;">Dashboard Monitor & Control</h2>
+        
         <div id="dashboardWidgets" class="widget-grid">
-          
           <div class="widget-card">
             <h3>Status Sistem</h3>
             <p style="color: var(--text-muted);">Sistem siap menerima & mengirim data ke Micro:bit. Silakan buat widget Input/Output di Widget Builder.</p>
           </div>
+        </div>
 
+        <!-- GRAFIK SENSOR LIVE -->
+        <div class="chart-box">
+          <h3>📈 Monitoring Data Sensor Real-time</h3>
+          <div style="height: 250px; position: relative; width: 100%; margin-top: 10px;">
+            <canvas id="sensorChart"></canvas>
+          </div>
         </div>
       </div>
 
@@ -580,9 +625,9 @@
 
       <!-- PAGE: TEACHABLE MACHINE -->
       <div id="teachable" class="page">
-        <h2 style="margin-bottom: 1rem;">Teachable Machine</h2>
+        <h2 style="margin-bottom: 1rem;">Teachable Machine AI</h2>
         
-        <div class="widget-card" style="max-width: 520px; margin: 0 auto;">
+        <div class="widget-card" style="max-width: 550px; margin: 0 auto;">
           <div class="form-group">
             <label>Link Model Teachable Machine:</label>
             <input type="text" id="tmModelUrl" class="form-control" 
@@ -605,6 +650,39 @@
             <span id="tmStatusBadge" class="tm-status-badge tm-status-idle">Belum dimuat</span>
           </div>
 
+          <!-- FITUR BARU: PANEL KONTROL TOGGLE & THRESHOLD -->
+          <div class="tm-controls-box">
+            <div class="tm-toggle-row">
+              <div>
+                <strong style="font-size: 0.95rem;">Kirim Data Otomatis via BLE:</strong>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Aktifkan untuk mengirim perintah langsung ke Micro:bit</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="tmAutoSendToggle" checked>
+                <span class="slider-toggle"></span>
+              </label>
+            </div>
+            
+            <hr style="border-color: var(--border-color); margin: 4px 0;">
+
+            <div class="tm-slider-group">
+              <div class="tm-slider-label">
+                <span>Batas Minimal Kirim Data (Trigger On):</span>
+                <strong id="tmSendThreshVal" style="color: var(--success);">85%</strong>
+              </div>
+              <input type="range" id="tmSendThreshSlider" min="50" max="99" value="85" class="form-control" oninput="updateTmThresholds()">
+            </div>
+
+            <div class="tm-slider-group">
+              <div class="tm-slider-label">
+                <span>Batas Minimal Pembatalan (Trigger Stop):</span>
+                <strong id="tmStopThreshVal" style="color: var(--danger);">80%</strong>
+              </div>
+              <input type="range" id="tmStopThreshSlider" min="30" max="95" value="80" class="form-control" oninput="updateTmThresholds()">
+            </div>
+          </div>
+
+          <!-- WEBCAM CONTAINER -->
           <div class="tm-webcam-container" id="tmWebcamContainer">
             <div class="tm-placeholder" id="tmPlaceholder">
               Masukkan link model lalu tekan<br><strong>Load Model & Kamera</strong>
@@ -614,8 +692,8 @@
           <div id="tmPredictionList" class="tm-prediction-list"></div>
 
           <div class="tm-last-sent" id="tmLastSentBox" style="display: none;">
-            <div class="label">Data terakhir dikirim ke Micro:bit (≥85%)</div>
-            <div class="value" id="tmLastSentValue">—</div>
+            <div class="label" id="tmLastSentLabel">Data aktif terkirim ke Micro:bit</div>
+            <div class="value" id="tmLastSentValue">STANDBY / STOP</div>
           </div>
         </div>
       </div>
@@ -679,13 +757,20 @@
       userPin: "12345",
       webTitle: "Controler Bluetooth",
       devUserName: "GUA DEVLOP",
-      devUserImg: "download (87).jpg",
+      devUserImg: "https://placehold.co/100x100/3b82f6/ffffff?text=DEV",
       userUserName: "user biasa",
-      userUserImg: "Membawa Sajam.jpg",
+      userUserImg: "https://placehold.co/100x100/10b981/ffffff?text=USER",
       theme: "dark"
     };
 
     let currentUserRole = "";
+    let sensorChart = null;
+
+    // --- INISIALISASI SAAT APPS DILOAD ---
+    window.onload = function() {
+      initChart();
+      loadCustomWidgets();
+    };
 
     function unlockWebsite() {
       const inputPass = document.getElementById('pinInput').value;
@@ -783,11 +868,7 @@
 
     function clearLogs() {
       const now = new Date();
-      const jam = String(now.getHours()).padStart(2, '0');
-      const menit = String(now.getMinutes()).padStart(2, '0');
-      const detik = String(now.getSeconds()).padStart(2, '0');
-      
-      const timeString = `${jam}:${menit}:${detik}`;
+      const timeString = now.toLocaleTimeString();
       document.getElementById('activityLogs').innerHTML = `<div class="log-card log-info">Log dibersihkan pada ${timeString}</div>`;
     }
 
@@ -818,7 +899,7 @@
       alert("Pengaturan Berhasil Disimpan!");
     }
 
-    // MEMBUAT WIDGET INPUT/OUTPUT KE DASHBOARD
+    // --- WIDGET BUILDER & DASHBOARD INTEGRATION ---
     function createCustomWidget() {
       const name = document.getElementById('builderName').value.trim();
       const key = document.getElementById('builderKey').value.trim();
@@ -829,6 +910,17 @@
         return;
       }
 
+      renderWidgetCard(name, key, category);
+      saveWidgetToStorage(name, key, category);
+
+      addLog(`Widget '${name}' berhasil ditambahkan ke Dashboard`, "success");
+      alert(`Widget '${name}' Berhasil Dibuat dan Muncul di Dashboard!`);
+      
+      document.getElementById('builderName').value = '';
+      document.getElementById('builderKey').value = '';
+    }
+
+    function renderWidgetCard(name, key, category) {
       const grid = document.getElementById('dashboardWidgets');
       const card = document.createElement('div');
       card.className = "widget-card";
@@ -856,11 +948,6 @@
       }
 
       grid.appendChild(card);
-      addLog(`Widget '${name}' berhasil ditambahkan ke Dashboard`, "success");
-      alert(`Widget '${name}' Berhasil Dibuat dan Muncul di Dashboard!`);
-      
-      document.getElementById('builderName').value = '';
-      document.getElementById('builderKey').value = '';
     }
 
     function removeWidget(btnElement, widgetName) {
@@ -868,12 +955,75 @@
         const widgetCard = btnElement.closest('.widget-card');
         if (widgetCard) {
           widgetCard.remove();
+          removeWidgetFromStorage(widgetName);
           addLog(`Widget '${widgetName}' telah dihapus dari Dashboard`, "warning");
         }
       }
     }
 
+    function saveWidgetToStorage(name, key, category) {
+      let widgets = JSON.parse(localStorage.getItem('custom_widgets') || '[]');
+      widgets.push({ name, key, category });
+      localStorage.setItem('custom_widgets', JSON.stringify(widgets));
+    }
+
+    function loadCustomWidgets() {
+      let widgets = JSON.parse(localStorage.getItem('custom_widgets') || '[]');
+      widgets.forEach(w => renderWidgetCard(w.name, w.key, w.category));
+    }
+
+    function removeWidgetFromStorage(name) {
+      let widgets = JSON.parse(localStorage.getItem('custom_widgets') || '[]');
+      widgets = widgets.filter(w => w.name !== name);
+      localStorage.setItem('custom_widgets', JSON.stringify(widgets));
+    }
+
     document.getElementById('settingWebTitle').value = appConfig.webTitle;
+
+    // --- CHART REAL-TIME ---
+    function initChart() {
+      const ctx = document.getElementById('sensorChart').getContext('2d');
+      sensorChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Data Sensor Inbound',
+            data: [],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+          },
+          plugins: {
+            legend: { labels: { color: '#f8fafc' } }
+          }
+        }
+      });
+    }
+
+    function updateChartData(val) {
+      if (!sensorChart) return;
+      const numVal = parseFloat(val);
+      if (isNaN(numVal)) return;
+
+      const now = new Date().toLocaleTimeString();
+      if (sensorChart.data.labels.length > 15) {
+        sensorChart.data.labels.shift();
+        sensorChart.data.datasets[0].data.shift();
+      }
+      sensorChart.data.labels.push(now);
+      sensorChart.data.datasets[0].data.push(numVal);
+      sensorChart.update();
+    }
 
     // --- BLUETOOTH CORE ---
     const UART_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
@@ -971,9 +1121,11 @@
         if (customDisplay) {
           customDisplay.innerText = val;
         }
+        updateChartData(val);
       } else {
         const inputWidgets = document.querySelectorAll('[id^="widget_val_"]');
         inputWidgets.forEach(w => w.innerText = receivedString);
+        updateChartData(receivedString);
       }
     }
 
@@ -1036,14 +1188,35 @@
     });
 
     // =====================================================
-    // TEACHABLE MACHINE INTEGRATION (PERBAIKAN URL AUTOMATIC)
+    // TEACHABLE MACHINE INTEGRATION DENGAN LOGIKA HISTERESIS
     // =====================================================
     let tmModel = null;
     let tmWebcam = null;
     let tmMaxPredictions = 0;
     let tmIsRunning = false;
-    let tmLastSentClass = null;          
-    const TM_CONFIDENCE_THRESHOLD = 0.85; 
+    let tmLastSentClass = null; // Memori status kelas yang saat ini terkirim/aktif
+
+    // Default threshold
+    let tmSendThreshold = 0.85; // 85% untuk Mulai Kirim
+    let tmStopThreshold = 0.80; // 80% untuk Otomatis Stop
+
+    function updateTmThresholds() {
+      let sendVal = parseInt(document.getElementById('tmSendThreshSlider').value);
+      let stopVal = parseInt(document.getElementById('tmStopThreshSlider').value);
+
+      // Pastikan threshold stop tidak lebih tinggi dari threshold kirim
+      if (stopVal >= sendVal) {
+        stopVal = sendVal - 1;
+        document.getElementById('tmStopThreshSlider').value = stopVal;
+      }
+
+      tmSendThreshold = sendVal / 100;
+      tmStopThreshold = stopVal / 100;
+
+      document.getElementById('tmSendThreshVal').innerText = sendVal + '%';
+      document.getElementById('tmStopThreshVal').innerText = stopVal + '%';
+      document.getElementById('tmLastSentLabel').innerText = `Data aktif (>=${sendVal}%) / Auto Stop (<${stopVal}%)`;
+    }
 
     function setTmStatus(text, type) {
       const badge = document.getElementById('tmStatusBadge');
@@ -1081,7 +1254,7 @@
 
         const flip = true;
         tmWebcam = new tmImage.Webcam(400, 300, flip);
-        await tmWebcam.setup(); 
+        await tmWebcam.setup();
         await tmWebcam.play();
 
         const container = document.getElementById('tmWebcamContainer');
@@ -1105,7 +1278,7 @@
         document.getElementById('tmStopBtn').style.display = 'inline-block';
         document.getElementById('tmLoadBtn').disabled = false;
 
-        setTmStatus("Aktif - Kamera menyala", "ready");
+        setTmStatus("Aktif - Deteksi Kamera", "ready");
         addLog("Model Teachable Machine berhasil dimuat & kamera aktif", "success");
 
         tmIsRunning = true;
@@ -1127,6 +1300,13 @@
         tmWebcam.stop();
         tmWebcam = null;
       }
+
+      // Jika ada pergerakan yang belum distop saat kamera dimatikan
+      if (tmLastSentClass) {
+        sendBLEData('stop');
+        tmLastSentClass = null;
+      }
+
       document.getElementById('tmWebcamContainer').innerHTML = `
         <div class="tm-placeholder" id="tmPlaceholder">
           Kamera dihentikan.<br>Tekan <strong>Load Model & Kamera</strong> untuk memulai lagi.
@@ -1151,7 +1331,9 @@
       if (!tmModel || !tmWebcam) return;
 
       const prediction = await tmModel.predict(tmWebcam.canvas);
+      const isAutoSendActive = document.getElementById('tmAutoSendToggle').checked;
 
+      // Cari prediksi tertinggi
       let bestIndex = 0;
       let bestProb = 0;
       for (let i = 0; i < tmMaxPredictions; i++) {
@@ -1161,11 +1343,13 @@
         }
       }
 
+      // Update UI Tampilan Prediksi
       for (let i = 0; i < tmMaxPredictions; i++) {
         const item = document.getElementById(`tm-pred-${i}`);
         if (!item) continue;
 
-        const pct = Math.round(prediction[i].probability * 100);
+        const prob = prediction[i].probability;
+        const pct = Math.round(prob * 100);
         item.querySelector('.tm-class-name').innerText = prediction[i].className;
         const confEl = item.querySelector('.tm-confidence');
         confEl.innerText = pct + '%';
@@ -1174,10 +1358,10 @@
         confEl.classList.remove('high', 'low');
 
         if (i === bestIndex) {
-          if (bestProb >= TM_CONFIDENCE_THRESHOLD) {
+          if (prob >= tmSendThreshold) {
             item.classList.add('active');
             confEl.classList.add('high');
-          } else {
+          } else if (prob >= tmStopThreshold) {
             item.classList.add('low');
             confEl.classList.add('low');
           }
@@ -1185,12 +1369,35 @@
       }
 
       const bestClass = prediction[bestIndex].className;
-      if (bestProb >= TM_CONFIDENCE_THRESHOLD) {
-        if (bestClass !== tmLastSentClass) {
-          tmLastSentClass = bestClass;
-          document.getElementById('tmLastSentValue').innerText = bestClass;
-          sendBLEData(bestClass);
-          addLog(`TM (≥85%): "${bestClass}" → dikirim ke Micro:bit`, "success");
+
+      // =====================================================
+      // LOGIKA AKURASI BARU (SEND >= 85% & STOP < 80%)
+      // =====================================================
+      if (isAutoSendActive) {
+        // PERINTAH 1: KONDISI DI ATAS / SAMA DENGAN THRESHOLD KIRIM (>= 85%)
+        if (bestProb >= tmSendThreshold) {
+          if (bestClass !== tmLastSentClass) {
+            tmLastSentClass = bestClass;
+            document.getElementById('tmLastSentValue').innerText = bestClass;
+            sendBLEData(bestClass);
+            addLog(`TM AI (≥${Math.round(tmSendThreshold*100)}%): "${bestClass}" -> Dikirim`, "success");
+          }
+        }
+        // PERINTAH 2: KONDISI AKURASI TURUN DI BEWAH THRESHOLD STOP (< 80%)
+        else if (bestProb < tmStopThreshold) {
+          // Jika sebelumnya sedang dalam keadaan mengirim data perintah aktif
+          if (tmLastSentClass !== null) {
+            sendBLEData('stop');
+            addLog(`TM AI (<${Math.round(tmStopThreshold*100)}%): Akurasi Turun -> Auto STOP Sent`, "warning");
+            tmLastSentClass = null; // Reset memori kelas
+            document.getElementById('tmLastSentValue').innerText = "STANDBY / STOP";
+          }
+        }
+      } else {
+        // Jika sakelar pengiriman otomatis OFF
+        if (tmLastSentClass !== null) {
+          tmLastSentClass = null;
+          document.getElementById('tmLastSentValue').innerText = "TOGGLE BLE OFF";
         }
       }
     }
