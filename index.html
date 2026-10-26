@@ -98,7 +98,7 @@
       pointer-events: auto !important;
     }
 
-    /* --- NAVBAR KIRI --- */
+    /* --- NAVBAR KIRI (LAPTOP) --- */
     .sidebar {
       width: 250px;
       background: var(--panel-dark);
@@ -157,6 +157,44 @@
     .nav-btn:hover, .nav-btn.active {
       background: var(--accent);
       color: #fff;
+    }
+
+    /* --- BOTTOM NAVBAR (HP / MOBILE) --- */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: var(--panel-dark);
+      border-top: 1px solid var(--border-color);
+      z-index: 100;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 4px;
+    }
+
+    .mobile-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      flex: 1;
+      height: 100%;
+      gap: 2px;
+    }
+    .mobile-nav-item.active {
+      color: var(--accent);
+      font-weight: bold;
+    }
+    .mobile-nav-item span.icon {
+      font-size: 1.2rem;
     }
 
     /* --- MAIN CONTENT --- */
@@ -394,6 +432,61 @@
     }
     .tm-confidence { font-weight: bold; color: var(--accent); }
     .tm-confidence.high { color: var(--success); }
+
+    /* ======================================================= */
+    /* RESPONSIVE MEDIA QUERIES (PENYESUAIAN KHUSUS HP)        */
+    /* ======================================================= */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      /* Sembunyikan Sidebar Kiri di HP */
+      .sidebar {
+        display: none;
+      }
+
+      /* Tampilkan Bottom Nav Bar di HP */
+      .mobile-bottom-nav {
+        display: flex;
+      }
+
+      /* Sembunyikan Panel Log Kanan di HP */
+      .activity-panel {
+        display: none;
+      }
+
+      /* Main Content Memenuhi Layar HP */
+      .main-content {
+        padding: 1rem;
+        padding-bottom: 80px; /* Jarak untuk Bottom Nav */
+      }
+
+      .top-bar {
+        padding: 0.8rem;
+        font-size: 0.85rem;
+      }
+
+      /* Pembesaran Tombol D-Pad di HP agar Mudah Ditekan Jari */
+      .d-pad {
+        grid-template-columns: repeat(3, 85px);
+        grid-template-rows: repeat(3, 85px);
+        gap: 12px;
+      }
+
+      .d-pad .btn {
+        font-size: 1.8rem;
+      }
+
+      .gripper-controls .btn {
+        padding: 14px;
+        font-size: 1rem;
+      }
+
+      .widget-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -411,7 +504,7 @@
   <!-- CONTAINER APLIKASI -->
   <div id="app-container">
     
-    <!-- NAVBAR KIRI -->
+    <!-- NAVBAR KIRI (TAMPILAN LAPTOP / TABLET) -->
     <div class="sidebar">
       <div class="profile-card">
         <img id="userImgNav" src="Membawa Sajam.jpg" class="profile-img" alt="Foto Profil">
@@ -494,7 +587,7 @@
         <h2 style="margin-bottom: 1rem;">Robot Controller & Fitur Capit</h2>
         <div class="widget-card" style="align-items: center; max-width: 500px; margin: 0 auto;">
           <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 1rem;">
-            <span>Gunakan Mode Keyboard (WASD & J/K Capit):</span>
+            <span>Mode Keyboard WASD & J/K (Laptop):</span>
             <label class="switch">
               <input type="checkbox" id="wasdToggle">
               <span class="slider-toggle"></span>
@@ -640,7 +733,7 @@
 
     </div>
 
-    <!-- ACTIVITY LOG PANEL -->
+    <!-- ACTIVITY LOG PANEL (LAPTOP / TABLET) -->
     <div class="activity-panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3>System Activity</h3>
@@ -649,6 +742,34 @@
       <div id="activityLogs" class="activity-logs">
         <div class="log-card log-info">System siap digunakan</div>
       </div>
+    </div>
+
+    <!-- BOTTOM NAV BAR (TAMPILAN KHUSUS HP) -->
+    <div class="mobile-bottom-nav">
+      <button class="mobile-nav-item active" onclick="switchPage('dashboard')">
+        <span class="icon">📊</span>
+        <span>Dashboard</span>
+      </button>
+      <button class="mobile-nav-item" onclick="switchPage('builder')">
+        <span class="icon">🛠️</span>
+        <span>Builder</span>
+      </button>
+      <button class="mobile-nav-item" onclick="switchPage('controller')">
+        <span class="icon">🎮</span>
+        <span>Control</span>
+      </button>
+      <button class="mobile-nav-item" onclick="switchPage('teachable')">
+        <span class="icon">🤖</span>
+        <span>AI Cam</span>
+      </button>
+      <button class="mobile-nav-item" id="mobileSettingBtn" onclick="switchPage('setting')">
+        <span class="icon">⚙️</span>
+        <span>Setting</span>
+      </button>
+      <button class="mobile-nav-item" onclick="lockWebsite()">
+        <span class="icon">🔒</span>
+        <span>Kunci</span>
+      </button>
     </div>
 
   </div>
@@ -768,14 +889,18 @@
     function applyRolePermissions() {
       const badge = document.getElementById('userRoleBadge');
       const settingNav = document.getElementById('navSettingBtn');
+      const mobileSettingBtn = document.getElementById('mobileSettingBtn');
+
       if (currentUserRole === "dev") {
         badge.innerText = "Developer";
         badge.className = "role-badge role-dev";
-        settingNav.style.display = "block";
+        if (settingNav) settingNav.style.display = "block";
+        if (mobileSettingBtn) mobileSettingBtn.style.display = "flex";
       } else {
         badge.innerText = "User";
         badge.className = "role-badge role-user";
-        settingNav.style.display = "none";
+        if (settingNav) settingNav.style.display = "none";
+        if (mobileSettingBtn) mobileSettingBtn.style.display = "none";
         switchPage('dashboard');
       }
     }
@@ -785,14 +910,31 @@
         alert("Akses Ditolak!");
         return;
       }
+
+      // Hide all pages
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+
+      // Deactivate desktop nav
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+      // Deactivate mobile nav
+      document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
+
       const target = document.getElementById(pageId);
       if (target) target.classList.add('active');
+
+      // Sync active state for desktop sidebar
+      const activeNavBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick')?.includes(`'${pageId}'`));
+      if (activeNavBtn) activeNavBtn.classList.add('active');
+
+      // Sync active state for mobile bottom nav
+      const activeMobileNav = Array.from(document.querySelectorAll('.mobile-nav-item')).find(b => b.getAttribute('onclick')?.includes(`'${pageId}'`));
+      if (activeMobileNav) activeMobileNav.classList.add('active');
     }
 
     function addLog(msg, type="info") {
       const container = document.getElementById('activityLogs');
+      if (!container) return;
       const card = document.createElement('div');
       card.className = `log-card log-${type}`;
       card.innerText = msg;
@@ -801,7 +943,8 @@
     }
 
     function clearLogs() {
-      document.getElementById('activityLogs').innerHTML = '<div class="log-card log-info">Log dibersihkan</div>';
+      const el = document.getElementById('activityLogs');
+      if (el) el.innerHTML = '<div class="log-card log-info">Log dibersihkan</div>';
     }
 
     function changeTheme(theme) {
