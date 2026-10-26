@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="docTitle">Controler Bluetooth</title>
-  <!-- Library External -->
+  <title id="docTitle">Controller Bluetooth</title>
+  
+  <!-- CDN External Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
   <style>
     :root {
       --bg-dark: #0f172a;
@@ -19,6 +21,7 @@
       --danger: #ef4444;
       --success: #10b981;
       --warning: #f59e0b;
+      --purple: #8b5cf6;
     }
 
     body.light-theme {
@@ -103,21 +106,22 @@
       display: flex;
       flex-direction: column;
       padding: 1rem;
-      gap: 1rem;
+      gap: 0.6rem;
       z-index: 10;
+      overflow-y: auto;
     }
 
     .profile-card {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding-bottom: 1rem;
+      padding-bottom: 0.8rem;
       border-bottom: 1px solid var(--border-color);
     }
 
     .profile-img {
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid var(--accent);
@@ -138,13 +142,16 @@
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 12px;
+      padding: 10px 12px;
       text-align: left;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 500;
       width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .nav-btn:hover, .nav-btn.active {
@@ -181,14 +188,17 @@
       cursor: pointer;
       font-weight: bold;
       user-select: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
     .btn:hover { opacity: 0.9; }
     .btn:active { transform: scale(0.96); }
     .btn-danger { background: var(--danger); }
-    .btn-sm {
-      padding: 4px 10px;
-      font-size: 0.8rem;
-    }
+    .btn-warning { background: var(--warning); color: black; }
+    .btn-purple { background: var(--purple); }
+    .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
     .btn-success { background: var(--success); }
 
     .page { display: none; }
@@ -220,7 +230,7 @@
       background: var(--panel-dark);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 1rem;
+      padding: 1.2rem;
       display: flex;
       flex-direction: column;
       gap: 0.8rem;
@@ -239,24 +249,43 @@
       color: var(--accent);
     }
 
-    /* CONTROLLER ROBOT */
+    /* CONTROLLER ROBOT & D-PAD CAPIT */
+    .d-pad-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+    }
+
     .d-pad {
       display: grid;
-      grid-template-columns: repeat(3, 80px);
-      grid-template-rows: repeat(3, 80px);
+      grid-template-columns: repeat(3, 75px);
+      grid-template-rows: repeat(3, 75px);
       gap: 10px;
       justify-content: center;
-      margin-top: 1rem;
     }
 
     .d-pad .btn {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 0;
     }
 
-    /* --- SYSTEM ACTIVITY PANEL --- */
+    .gripper-controls {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 320px;
+    }
+    .gripper-controls .btn {
+      flex: 1;
+      padding: 12px 10px;
+      font-size: 0.95rem;
+    }
+
+    /* SYSTEM ACTIVITY PANEL */
     .activity-panel {
       width: 310px;
       background: var(--panel-dark);
@@ -267,7 +296,7 @@
     }
 
     .activity-logs {
-      height: 480px;
+      height: 100%;
       background: var(--bg-dark);
       border-radius: 8px;
       border: 1px solid var(--border-color);
@@ -292,51 +321,10 @@
       border-left-color: var(--danger); 
       background: rgba(239, 68, 68, 0.1);
       color: #fca5a5;
-      cursor: pointer;
     }
     .log-card.log-warning { 
       border-left-color: var(--warning); 
       background: rgba(245, 158, 11, 0.1);
-      cursor: pointer;
-    }
-
-    /* MODAL POPUP ERROR DETAILS */
-    #errorModal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(5px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-    }
-
-    .modal-box {
-      background: var(--panel-dark);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1.5rem;
-      width: 450px;
-      max-width: 90vw;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--danger);
-      margin-bottom: 1rem;
-    }
-
-    .modal-section {
-      background: var(--bg-dark);
-      border-radius: 6px;
-      padding: 10px;
-      margin-bottom: 1rem;
-      border: 1px solid var(--border-color);
-      font-size: 0.9rem;
     }
 
     /* SWITCH CUSTOM */
@@ -358,7 +346,7 @@
     input:checked + .slider-toggle { background-color: var(--accent); }
     input:checked + .slider-toggle:before { transform: translateX(24px); }
 
-    /* --- TEACHABLE MACHINE STYLES --- */
+    /* STYLES TEACHABLE */
     .tm-webcam-container {
       width: 100%;
       max-width: 400px;
@@ -402,84 +390,10 @@
     }
     .tm-pred-item.active {
       border-color: var(--success);
-      background: rgba(16, 185, 129, 0.15);
+      background: rgba(16, 185, 129, 0.1);
     }
-    .tm-pred-item.low {
-      border-color: var(--warning);
-      background: rgba(245, 158, 11, 0.08);
-    }
-    .tm-confidence {
-      font-weight: bold;
-      color: var(--accent);
-    }
+    .tm-confidence { font-weight: bold; color: var(--accent); }
     .tm-confidence.high { color: var(--success); }
-    .tm-confidence.low { color: var(--warning); }
-    .tm-status-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
-    .tm-status-idle { background: var(--border-color); color: var(--text-muted); }
-    .tm-status-loading { background: var(--warning); color: #000; }
-    .tm-status-ready { background: var(--success); color: #fff; }
-    .tm-status-error { background: var(--danger); color: #fff; }
-    .tm-last-sent {
-      margin-top: 1rem;
-      padding: 12px;
-      background: rgba(59, 130, 246, 0.1);
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      text-align: center;
-    }
-    .tm-last-sent .label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-    .tm-last-sent .value {
-      font-size: 1.4rem;
-      font-weight: bold;
-      color: var(--accent);
-    }
-
-    /* CONTROL PANEL PANEL TM */
-    .tm-controls-box {
-      background: var(--bg-dark);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .tm-toggle-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .tm-slider-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .tm-slider-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-
-    /* CHART CONTAINER */
-    .chart-box {
-      background: var(--panel-dark);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-top: 1rem;
-    }
   </style>
 </head>
 <body>
@@ -487,7 +401,7 @@
   <!-- LAYAR KUNCI -->
   <div id="lock-screen">
     <div class="lock-card">
-      <h2 id="lockWebTitle">Controler Bluetooth</h2>
+      <h2 id="lockWebTitle">Controller Bluetooth</h2>
       <p style="color: var(--text-muted);">Masukkan Password Akses</p>
       <input type="password" id="pinInput" placeholder="••••••" onkeydown="if(event.key==='Enter') unlockWebsite()">
       <button class="btn" style="width: 100%;" onclick="unlockWebsite()">Buka Kunci</button>
@@ -500,27 +414,27 @@
     <!-- NAVBAR KIRI -->
     <div class="sidebar">
       <div class="profile-card">
-        <img id="userImgNav" src="https://placehold.co/100x100/3b82f6/ffffff?text=User" class="profile-img" alt="Foto Profil">
+        <img id="userImgNav" src="Membawa Sajam.jpg" class="profile-img" alt="Foto Profil">
         <div class="profile-info">
           <span id="userNameNav" style="font-weight: bold; font-size: 0.95rem;">Pengguna</span>
           <span id="userRoleBadge" class="role-badge role-user">User</span>
         </div>
       </div>
 
-      <h2 id="webTitleNav" style="font-size: 1.1rem; color: var(--accent);">Controler Bluetooth</h2>
+      <h2 id="webTitleNav" style="font-size: 1.1rem; color: var(--accent);">Controller Bluetooth</h2>
       
       <button class="nav-btn active" onclick="switchPage('dashboard')">📊 Dashboard</button>
       <button class="nav-btn" onclick="switchPage('builder')">🛠️ Widget Builder</button>
-      <button class="nav-btn" onclick="switchPage('controller')">🎮 Controller</button>
+      <button class="nav-btn" onclick="switchPage('controller')">🎮 Controller & Capit</button>
       <button class="nav-btn" onclick="switchPage('teachable')">🤖 Teachable Machine</button>
-      <button id="navSettingBtn" class="nav-btn" onclick="switchPage('setting')">⚙️ Settings</button>
+      <button id="navSettingBtn" class="nav-btn" onclick="switchPage('setting')">⚙️ Settings & Backup</button>
 
       <div style="margin-top: auto;">
         <button class="btn btn-danger" style="width: 100%;" onclick="lockWebsite()">🔒 Kunci Web</button>
       </div>
     </div>
 
-    <!-- UTAMA -->
+    <!-- MAIN CONTENT AREA -->
     <div class="main-content">
       <div class="top-bar">
         <div>
@@ -533,18 +447,21 @@
       <div id="dashboard" class="page active">
         <h2 style="margin-bottom: 1rem;">Dashboard Monitor & Control</h2>
         
-        <div id="dashboardWidgets" class="widget-grid">
-          <div class="widget-card">
-            <h3>Status Sistem</h3>
-            <p style="color: var(--text-muted);">Sistem siap menerima & mengirim data ke Micro:bit. Silakan buat widget Input/Output di Widget Builder.</p>
+        <!-- CHART SENSOR REALTIME -->
+        <div class="widget-card" style="margin-bottom: 1.5rem;">
+          <div class="widget-header">
+            <h3>📈 Sensor Real-time Chart</h3>
+            <button class="btn btn-sm" onclick="clearChart()">Reset Grafik</button>
+          </div>
+          <div style="height: 250px; width: 100%;">
+            <canvas id="sensorChart"></canvas>
           </div>
         </div>
 
-        <!-- GRAFIK SENSOR LIVE -->
-        <div class="chart-box">
-          <h3>📈 Monitoring Data Sensor Real-time</h3>
-          <div style="height: 250px; position: relative; width: 100%; margin-top: 10px;">
-            <canvas id="sensorChart"></canvas>
+        <div id="dashboardWidgets" class="widget-grid">
+          <div class="widget-card">
+            <h3>Status Sistem</h3>
+            <p style="color: var(--text-muted);">Sistem siap menerima & mengirim data ke Micro:bit / Tinybit.</p>
           </div>
         </div>
       </div>
@@ -572,154 +489,158 @@
         </div>
       </div>
 
-      <!-- PAGE: CONTROLLER (Roblox-Style Hold Control) -->
+      <!-- PAGE: CONTROLLER (D-Pad + CAPIT / DOUBLE SERVO) -->
       <div id="controller" class="page">
-        <h2 style="margin-bottom: 1rem;">Robot Controller</h2>
-        <div class="widget-card" style="align-items: center; max-width: 450px; margin: 0 auto;">
+        <h2 style="margin-bottom: 1rem;">Robot Controller & Fitur Capit</h2>
+        <div class="widget-card" style="align-items: center; max-width: 500px; margin: 0 auto;">
           <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 1rem;">
-            <span>Gunakan Mode Keyboard (WASD):</span>
+            <span>Gunakan Mode Keyboard (WASD & J/K Capit):</span>
             <label class="switch">
               <input type="checkbox" id="wasdToggle">
               <span class="slider-toggle"></span>
             </label>
           </div>
 
-          <!-- D-Pad dengan Sinyal Tahan (Hold) dan Lepas (Release) -->
-          <div class="d-pad">
-            <div></div>
-            <button class="btn" 
-                    onmousedown="sendBLEData('up')" 
-                    onmouseup="sendBLEData('stop')" 
-                    onmouseleave="sendBLEData('stop')"
-                    ontouchstart="sendBLEData('up'); event.preventDefault();" 
-                    ontouchend="sendBLEData('stop'); event.preventDefault();">▲</button>
-            <div></div>
+          <!-- CONTAINER D-PAD + FITUR CAPIT -->
+          <div class="d-pad-container">
+            <!-- FITUR TOMBOL CAPIT DUA SERVO -->
+            <div class="gripper-controls">
+              <button class="btn btn-purple" 
+                      onclick="sendBLEData('capit')" 
+                      title="Shortkey Keyboard: J">
+                🤏 Capit (Jepit)
+              </button>
+              <button class="btn btn-warning" 
+                      onclick="sendBLEData('lepas')" 
+                      title="Shortkey Keyboard: K">
+                🖐️ Lepas (Buka)
+              </button>
+            </div>
 
-            <button class="btn" 
-                    onmousedown="sendBLEData('left')" 
-                    onmouseup="sendBLEData('stop')" 
-                    onmouseleave="sendBLEData('stop')"
-                    ontouchstart="sendBLEData('left'); event.preventDefault();" 
-                    ontouchend="sendBLEData('stop'); event.preventDefault();">◄</button>
+            <!-- D-Pad Sinyal Hold/Release -->
+            <div class="d-pad">
+              <div></div>
+              <button class="btn" 
+                      onmousedown="sendBLEData('up')" 
+                      onmouseup="sendBLEData('stop')" 
+                      onmouseleave="sendBLEData('stop')"
+                      ontouchstart="sendBLEData('up'); event.preventDefault();" 
+                      ontouchend="sendBLEData('stop'); event.preventDefault();">▲</button>
+              <div></div>
 
-            <button class="btn btn-danger" onclick="sendBLEData('stop')">■</button>
+              <button class="btn" 
+                      onmousedown="sendBLEData('left')" 
+                      onmouseup="sendBLEData('stop')" 
+                      onmouseleave="sendBLEData('stop')"
+                      ontouchstart="sendBLEData('left'); event.preventDefault();" 
+                      ontouchend="sendBLEData('stop'); event.preventDefault();">◄</button>
 
-            <button class="btn" 
-                    onmousedown="sendBLEData('right')" 
-                    onmouseup="sendBLEData('stop')" 
-                    onmouseleave="sendBLEData('stop')"
-                    ontouchstart="sendBLEData('right'); event.preventDefault();" 
-                    ontouchend="sendBLEData('stop'); event.preventDefault();">►</button>
-            <div></div>
+              <button class="btn btn-danger" onclick="sendBLEData('stop')">■</button>
 
-            <button class="btn" 
-                    onmousedown="sendBLEData('back')" 
-                    onmouseup="sendBLEData('stop')" 
-                    onmouseleave="sendBLEData('stop')"
-                    ontouchstart="sendBLEData('back'); event.preventDefault();" 
-                    ontouchend="sendBLEData('stop'); event.preventDefault();">▼</button>
-            <div></div>
+              <button class="btn" 
+                      onmousedown="sendBLEData('right')" 
+                      onmouseup="sendBLEData('stop')" 
+                      onmouseleave="sendBLEData('stop')"
+                      ontouchstart="sendBLEData('right'); event.preventDefault();" 
+                      ontouchend="sendBLEData('stop'); event.preventDefault();">►</button>
+              <div></div>
+
+              <button class="btn" 
+                      onmousedown="sendBLEData('back')" 
+                      onmouseup="sendBLEData('stop')" 
+                      onmouseleave="sendBLEData('stop')"
+                      ontouchstart="sendBLEData('back'); event.preventDefault();" 
+                      ontouchend="sendBLEData('stop'); event.preventDefault();">▼</button>
+              <div></div>
+            </div>
+          </div>
+
+          <!-- KONTROL SUDUT SERVO CAPIT KUSTOM -->
+          <div style="width: 100%; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+            <h4 style="margin-bottom: 0.8rem; text-align: center;">Set Sudut Servo Capit</h4>
+            <div class="form-group">
+              <label>Servo 1 (Kiri/Utama): <span id="s1Val">90</span>°</label>
+              <input type="range" min="0" max="180" value="90" id="servo1Range" oninput="document.getElementById('s1Val').innerText=this.value">
+            </div>
+            <div class="form-group">
+              <label>Servo 2 (Kanan): <span id="s2Val">90</span>°</label>
+              <input type="range" min="0" max="180" value="90" id="servo2Range" oninput="document.getElementById('s2Val').innerText=this.value">
+            </div>
+            <button class="btn btn-sm" style="width: 100%;" onclick="sendCustomServo()">Kirim Sudut Servo Custom</button>
           </div>
         </div>
       </div>
 
-      <!-- PAGE: TEACHABLE MACHINE -->
+      <!-- PAGE: TEACHABLE MACHINE (WITH ON/OFF TOGGLE & HISTERESIS) -->
       <div id="teachable" class="page">
-        <h2 style="margin-bottom: 1rem;">Teachable Machine AI</h2>
+        <h2 style="margin-bottom: 1rem;">Teachable Machine Control</h2>
         
-        <div class="widget-card" style="max-width: 550px; margin: 0 auto;">
+        <div class="widget-card" style="max-width: 520px; margin: 0 auto;">
+          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark); padding: 10px; border-radius: 6px; margin-bottom: 1rem;">
+            <span style="font-weight: bold;">Kirim Data Otomatis ke Micro:bit:</span>
+            <label class="switch">
+              <input type="checkbox" id="tmAutoSendToggle" checked>
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>Batas Akurasi Kirim (Send Threshold): <span id="sendThreshVal">85</span>%</label>
+            <input type="range" min="50" max="99" value="85" id="sendThreshRange" oninput="document.getElementById('sendThreshVal').innerText=this.value">
+          </div>
+
+          <div class="form-group">
+            <label>Batas Pembatalan/Stop (Stop Threshold): <span id="stopThreshVal">80</span>%</label>
+            <input type="range" min="30" max="95" value="80" id="stopThreshRange" oninput="document.getElementById('stopThreshVal').innerText=this.value">
+          </div>
+
           <div class="form-group">
             <label>Link Model Teachable Machine:</label>
-            <input type="text" id="tmModelUrl" class="form-control" 
-                   placeholder="https://teachablemachine.withgoogle.com/models/xxxxx/">
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-              Export model dari Teachable Machine → Upload model → salin link-nya
-            </p>
+            <input type="text" id="tmModelUrl" class="form-control" placeholder="https://teachablemachine.withgoogle.com/models/xxxxx/">
           </div>
           
           <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
-            <button class="btn" id="tmLoadBtn" onclick="loadTeachableModel()" style="flex: 1;">
-              🚀 Load Model & Kamera
-            </button>
-            <button class="btn btn-danger" id="tmStopBtn" onclick="stopTeachableModel()" style="display: none;">
-              ⏹ Stop
-            </button>
+            <button class="btn" id="tmLoadBtn" onclick="loadTeachableModel()" style="flex: 1;">🚀 Load Model & Kamera</button>
+            <button class="btn btn-danger" id="tmStopBtn" onclick="stopTeachableModel()" style="display: none;">⏹ Stop</button>
           </div>
 
-          <div style="text-align: center; margin-bottom: 1rem;">
-            <span id="tmStatusBadge" class="tm-status-badge tm-status-idle">Belum dimuat</span>
-          </div>
-
-          <!-- FITUR BARU: PANEL KONTROL TOGGLE & THRESHOLD -->
-          <div class="tm-controls-box">
-            <div class="tm-toggle-row">
-              <div>
-                <strong style="font-size: 0.95rem;">Kirim Data Otomatis via BLE:</strong>
-                <p style="font-size: 0.75rem; color: var(--text-muted);">Aktifkan untuk mengirim perintah langsung ke Micro:bit</p>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="tmAutoSendToggle" checked>
-                <span class="slider-toggle"></span>
-              </label>
-            </div>
-            
-            <hr style="border-color: var(--border-color); margin: 4px 0;">
-
-            <div class="tm-slider-group">
-              <div class="tm-slider-label">
-                <span>Batas Minimal Kirim Data (Trigger On):</span>
-                <strong id="tmSendThreshVal" style="color: var(--success);">85%</strong>
-              </div>
-              <input type="range" id="tmSendThreshSlider" min="50" max="99" value="85" class="form-control" oninput="updateTmThresholds()">
-            </div>
-
-            <div class="tm-slider-group">
-              <div class="tm-slider-label">
-                <span>Batas Minimal Pembatalan (Trigger Stop):</span>
-                <strong id="tmStopThreshVal" style="color: var(--danger);">80%</strong>
-              </div>
-              <input type="range" id="tmStopThreshSlider" min="30" max="95" value="80" class="form-control" oninput="updateTmThresholds()">
-            </div>
-          </div>
-
-          <!-- WEBCAM CONTAINER -->
           <div class="tm-webcam-container" id="tmWebcamContainer">
-            <div class="tm-placeholder" id="tmPlaceholder">
-              Masukkan link model lalu tekan<br><strong>Load Model & Kamera</strong>
-            </div>
+            <div class="tm-placeholder">Masukkan link model lalu tekan Load Model & Kamera</div>
           </div>
 
           <div id="tmPredictionList" class="tm-prediction-list"></div>
-
-          <div class="tm-last-sent" id="tmLastSentBox" style="display: none;">
-            <div class="label" id="tmLastSentLabel">Data aktif terkirim ke Micro:bit</div>
-            <div class="value" id="tmLastSentValue">STANDBY / STOP</div>
-          </div>
         </div>
       </div>
 
-      <!-- PAGE: SETTINGS -->
+      <!-- PAGE: SETTINGS & BACKUP -->
       <div id="setting" class="page">
-        <h2 style="margin-bottom: 1rem;">Website Settings</h2>
+        <h2 style="margin-bottom: 1rem;">Website Settings & Backup Data</h2>
         <div class="widget-card" style="max-width: 500px;">
           <div class="form-group">
             <label>Tema Website:</label>
             <select id="settingTheme" class="form-control" onchange="changeTheme(this.value)">
               <option value="dark">Dark Mode</option>
-              <option value="light">White/Light Mode</option>
+              <option value="light">Light Mode</option>
             </select>
           </div>
           <div class="form-group">
             <label>Nama Website:</label>
             <input type="text" id="settingWebTitle" class="form-control">
           </div>
-          <button class="btn" onclick="saveSettings()">Simpan Pengaturan</button>
+          <button class="btn" style="margin-bottom: 1rem;" onclick="saveSettings()">Simpan Pengaturan</button>
+
+          <h4 style="border-top: 1px solid var(--border-color); padding-top: 1rem;">Export / Import JSON Data</h4>
+          <div style="display: flex; gap: 10px; margin-top: 0.5rem;">
+            <button class="btn btn-purple" onclick="exportDataJSON()" style="flex:1;">📥 Export JSON</button>
+            <button class="btn btn-warning" onclick="document.getElementById('importFileInput').click()" style="flex:1;">📤 Import JSON</button>
+            <input type="file" id="importFileInput" style="display:none;" onchange="importDataJSON(event)" accept=".json">
+          </div>
         </div>
       </div>
 
     </div>
 
-    <!-- ACTIVITY PANEL -->
+    <!-- ACTIVITY LOG PANEL -->
     <div class="activity-panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3>System Activity</h3>
@@ -732,46 +653,89 @@
 
   </div>
 
-  <!-- MODAL BANTUAN ERROR OTOMATIS -->
-  <div id="errorModal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <span style="font-size: 1.5rem;">⚠️</span>
-        <h3 id="modalTitle">Penjelasan Kesalahan</h3>
-      </div>
-      <div class="modal-section">
-        <strong style="color: var(--danger);">Apa yang salah:</strong>
-        <p id="modalReason" style="margin-top: 4px; color: var(--text-muted);"></p>
-      </div>
-      <div class="modal-section">
-        <strong style="color: var(--success);">Cara Memperbaikinya:</strong>
-        <p id="modalSolution" style="margin-top: 4px; white-space: pre-line;"></p>
-      </div>
-      <button class="btn" style="width: 100%; margin-top: 5px;" onclick="closeErrorModal()">Tutup & Mengerti</button>
-    </div>
-  </div>
-
   <script>
+    // APP CONFIG & LOCALSTORAGE MANAGEMENT
     let appConfig = {
       devPin: "010820",
       userPin: "12345",
-      webTitle: "Controler Bluetooth",
+      webTitle: "Controller Bluetooth",
       devUserName: "GUA DEVLOP",
-      devUserImg: "https://placehold.co/100x100/3b82f6/ffffff?text=DEV",
+      devUserImg: "download (87).jpg",
       userUserName: "user biasa",
-      userUserImg: "https://placehold.co/100x100/10b981/ffffff?text=USER",
-      theme: "dark"
+      userUserImg: "Membawa Sajam.jpg",
+      theme: "dark",
+      widgets: []
     };
 
     let currentUserRole = "";
     let sensorChart = null;
 
-    // --- INISIALISASI SAAT APPS DILOAD ---
-    window.onload = function() {
-      initChart();
-      loadCustomWidgets();
-    };
+    // LOCAL STORAGE INIT
+    function loadSavedData() {
+      const saved = localStorage.getItem('bt_app_config');
+      if (saved) {
+        try {
+          appConfig = { ...appConfig, ...JSON.parse(saved) };
+        } catch(e) {}
+      }
+      document.getElementById('settingWebTitle').value = appConfig.webTitle;
+      changeTheme(appConfig.theme);
+      renderSavedWidgets();
+    }
 
+    function saveAppData() {
+      localStorage.setItem('bt_app_config', JSON.stringify(appConfig));
+    }
+
+    // CHART.JS INIT
+    function initChart() {
+      const ctx = document.getElementById('sensorChart').getContext('2d');
+      sensorChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Nilai Sensor Input',
+            data: [],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' } }
+          }
+        }
+      });
+    }
+
+    function addChartData(val) {
+      if (!sensorChart) return;
+      const now = new Date();
+      const timeStr = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+      sensorChart.data.labels.push(timeStr);
+      sensorChart.data.datasets[0].data.push(val);
+      if (sensorChart.data.labels.length > 20) {
+        sensorChart.data.labels.shift();
+        sensorChart.data.datasets[0].data.shift();
+      }
+      sensorChart.update();
+    }
+
+    function clearChart() {
+      if (sensorChart) {
+        sensorChart.data.labels = [];
+        sensorChart.data.datasets[0].data = [];
+        sensorChart.update();
+      }
+    }
+
+    // AUTH & NAVIGATION
     function unlockWebsite() {
       const inputPass = document.getElementById('pinInput').value;
       if (inputPass === appConfig.devPin) {
@@ -784,7 +748,6 @@
         openApp("Login sebagai User");
       } else {
         alert("Password Salah!");
-        addLog("Akses ditolak: Password Salah", "error");
       }
     }
 
@@ -805,519 +768,195 @@
     function applyRolePermissions() {
       const badge = document.getElementById('userRoleBadge');
       const settingNav = document.getElementById('navSettingBtn');
-      const userNameDisplay = document.getElementById('userNameNav');
-      const userImgDisplay = document.getElementById('userImgNav');
-
       if (currentUserRole === "dev") {
         badge.innerText = "Developer";
         badge.className = "role-badge role-dev";
-        userNameDisplay.innerText = appConfig.devUserName;
-        userImgDisplay.src = appConfig.devUserImg;
         settingNav.style.display = "block";
       } else {
         badge.innerText = "User";
         badge.className = "role-badge role-user";
-        userNameDisplay.innerText = appConfig.userUserName;
-        userImgDisplay.src = appConfig.userUserImg;
         settingNav.style.display = "none";
         switchPage('dashboard');
       }
     }
 
-    // --- NAVIGASI HALAMAN ---
     function switchPage(pageId) {
       if (pageId === 'setting' && currentUserRole !== 'dev') {
-        alert("Akses Ditolak! Fitur ini khusus Developer.");
+        alert("Akses Ditolak!");
         return;
       }
-
-      const allPages = document.querySelectorAll('.page');
-      allPages.forEach(p => p.classList.remove('active'));
-
-      const allNavBtns = document.querySelectorAll('.nav-btn');
-      allNavBtns.forEach(b => b.classList.remove('active'));
-      
-      const targetPage = document.getElementById(pageId);
-      if (targetPage) {
-        targetPage.classList.add('active');
-      }
-
-      const activeBtn = Array.from(allNavBtns).find(b => {
-        const attr = b.getAttribute('onclick');
-        return attr && attr.includes(`'${pageId}'`);
-      });
-      if (activeBtn) activeBtn.classList.add('active');
-
-      addLog(`Membuka halaman: ${pageId}`, "info");
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      const target = document.getElementById(pageId);
+      if (target) target.classList.add('active');
     }
 
-    // --- LOGS & UTILS ---
-    function addLog(message, type = "info", errorDetail = null) {
-      const logsContainer = document.getElementById('activityLogs');
-      const logCard = document.createElement('div');
-      logCard.className = `log-card log-${type}`;
-      logCard.innerText = message;
-
-      if (errorDetail) {
-        logCard.onclick = () => showErrorDetails(errorDetail);
-      }
-
-      logsContainer.appendChild(logCard);
-      logsContainer.scrollTop = logsContainer.scrollHeight;
+    function addLog(msg, type="info") {
+      const container = document.getElementById('activityLogs');
+      const card = document.createElement('div');
+      card.className = `log-card log-${type}`;
+      card.innerText = msg;
+      container.appendChild(card);
+      container.scrollTop = container.scrollHeight;
     }
 
     function clearLogs() {
-      const now = new Date();
-      const timeString = now.toLocaleTimeString();
-      document.getElementById('activityLogs').innerHTML = `<div class="log-card log-info">Log dibersihkan pada ${timeString}</div>`;
-    }
-
-    function showErrorDetails(detail) {
-      document.getElementById('modalTitle').innerText = detail.title || "Detail Kesalahan";
-      document.getElementById('modalReason').innerText = detail.reason || "-";
-      document.getElementById('modalSolution').innerText = detail.solution || "-";
-      document.getElementById('errorModal').style.display = "flex";
-    }
-
-    function closeErrorModal() {
-      document.getElementById('errorModal').style.display = "none";
+      document.getElementById('activityLogs').innerHTML = '<div class="log-card log-info">Log dibersihkan</div>';
     }
 
     function changeTheme(theme) {
       appConfig.theme = theme;
       if (theme === 'light') document.body.classList.add('light-theme');
       else document.body.classList.remove('light-theme');
+      saveAppData();
     }
 
     function saveSettings() {
-      const newTitle = document.getElementById('settingWebTitle').value.trim();
-      if (newTitle) appConfig.webTitle = newTitle;
+      appConfig.webTitle = document.getElementById('settingWebTitle').value.trim() || appConfig.webTitle;
       document.getElementById('webTitleNav').innerText = appConfig.webTitle;
       document.getElementById('docTitle').innerText = appConfig.webTitle;
       document.getElementById('lockWebTitle').innerText = appConfig.webTitle;
-      addLog("Pengaturan disimpan", "success");
-      alert("Pengaturan Berhasil Disimpan!");
+      saveAppData();
+      alert("Pengaturan Disimpan!");
     }
 
-    // --- WIDGET BUILDER & DASHBOARD INTEGRATION ---
-    function createCustomWidget() {
-      const name = document.getElementById('builderName').value.trim();
-      const key = document.getElementById('builderKey').value.trim();
-      const category = document.getElementById('builderCategory').value;
-
-      if (!name || !key) {
-        alert("Lengkapi nama dan data key terlebih dahulu!");
-        return;
-      }
-
-      renderWidgetCard(name, key, category);
-      saveWidgetToStorage(name, key, category);
-
-      addLog(`Widget '${name}' berhasil ditambahkan ke Dashboard`, "success");
-      alert(`Widget '${name}' Berhasil Dibuat dan Muncul di Dashboard!`);
-      
-      document.getElementById('builderName').value = '';
-      document.getElementById('builderKey').value = '';
-    }
-
-    function renderWidgetCard(name, key, category) {
-      const grid = document.getElementById('dashboardWidgets');
-      const card = document.createElement('div');
-      card.className = "widget-card";
-
-      if (category === "input") {
-        card.innerHTML = `
-          <div class="widget-header">
-            <h3>${name} (Input)</h3>
-            <button class="btn btn-danger btn-sm" onclick="removeWidget(this, '${name}')">🗑️ Hapus</button>
-          </div>
-          <div id="widget_val_${key}" class="sensor-value">--</div>
-          <p style="color: var(--text-muted); font-size:0.85rem;">Menerima data '${key}' dari Micro:bit</p>
-        `;
-      } else {
-        card.innerHTML = `
-          <div class="widget-header">
-            <h3>${name} (Output)</h3>
-            <button class="btn btn-danger btn-sm" onclick="removeWidget(this, '${name}')">🗑️ Hapus</button>
-          </div>
-          <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="btn" onclick="sendBLEData('${key},1')">Nyalakan / Send 1</button>
-            <button class="btn btn-danger" onclick="sendBLEData('${key},0')">Matikan / Send 0</button>
-          </div>
-        `;
-      }
-
-      grid.appendChild(card);
-    }
-
-    function removeWidget(btnElement, widgetName) {
-      if (confirm(`Apakah Anda yakin ingin menghapus widget "${widgetName}"?`)) {
-        const widgetCard = btnElement.closest('.widget-card');
-        if (widgetCard) {
-          widgetCard.remove();
-          removeWidgetFromStorage(widgetName);
-          addLog(`Widget '${widgetName}' telah dihapus dari Dashboard`, "warning");
-        }
-      }
-    }
-
-    function saveWidgetToStorage(name, key, category) {
-      let widgets = JSON.parse(localStorage.getItem('custom_widgets') || '[]');
-      widgets.push({ name, key, category });
-      localStorage.setItem('custom_widgets', JSON.stringify(widgets));
-    }
-
-    function loadCustomWidgets() {
-      let widgets = JSON.parse(localStorage.getItem('custom_widgets') || '[]');
-      widgets.forEach(w => renderWidgetCard(w.name, w.key, w.category));
-    }
-
-    function removeWidgetFromStorage(name) {
-      let widgets = JSON.parse(localStorage.getItem('custom_widgets') || '[]');
-      widgets = widgets.filter(w => w.name !== name);
-      localStorage.setItem('custom_widgets', JSON.stringify(widgets));
-    }
-
-    document.getElementById('settingWebTitle').value = appConfig.webTitle;
-
-    // --- CHART REAL-TIME ---
-    function initChart() {
-      const ctx = document.getElementById('sensorChart').getContext('2d');
-      sensorChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: [],
-          datasets: [{
-            label: 'Data Sensor Inbound',
-            data: [],
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
-          },
-          plugins: {
-            legend: { labels: { color: '#f8fafc' } }
-          }
-        }
-      });
-    }
-
-    function updateChartData(val) {
-      if (!sensorChart) return;
-      const numVal = parseFloat(val);
-      if (isNaN(numVal)) return;
-
-      const now = new Date().toLocaleTimeString();
-      if (sensorChart.data.labels.length > 15) {
-        sensorChart.data.labels.shift();
-        sensorChart.data.datasets[0].data.shift();
-      }
-      sensorChart.data.labels.push(now);
-      sensorChart.data.datasets[0].data.push(numVal);
-      sensorChart.update();
-    }
-
-    // --- BLUETOOTH CORE ---
+    // BLUETOOTH CORE
     const UART_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-    const RX_CHARACTERISTIC_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"; // Kirim data (Write)
-    const TX_CHARACTERISTIC_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"; // Menerima data (Notify)
+    const RX_CHARACTERISTIC_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+    const TX_CHARACTERISTIC_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 
-    let bleDevice = null;
-    let rxCharacteristic = null;
-    let txCharacteristic = null;
-
+    let bleDevice = null, rxCharacteristic = null, txCharacteristic = null;
     const connectBtn = document.getElementById('connectBtn');
     const statusText = document.getElementById('statusText');
 
     connectBtn.addEventListener('click', async () => {
-      if (!navigator.bluetooth) {
-        alert("Browser tidak mendukung Web Bluetooth!");
-        addLog("Fitur Bluetooth tidak didukung browser ini", "error");
-        return;
-      }
-
-      if (bleDevice && bleDevice.gatt.connected) {
-        bleDevice.gatt.disconnect();
-        return;
-      }
+      if (!navigator.bluetooth) return alert("Browser tidak mendukung Web Bluetooth!");
+      if (bleDevice && bleDevice.gatt.connected) return bleDevice.gatt.disconnect();
 
       try {
-        addLog("Mencari perangkat Bluetooth Micro:bit...", "info");
         statusText.innerText = "Status: Mencari...";
-
         bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [
-            { services: [UART_SERVICE_UUID] },
-            { namePrefix: 'BBC micro:bit' },
-            { namePrefix: 'micro:bit' }
-          ],
+          filters: [{ services: [UART_SERVICE_UUID] }, { namePrefix: 'BBC micro:bit' }, { namePrefix: 'micro:bit' }],
           optionalServices: [UART_SERVICE_UUID]
         });
 
-        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-        statusText.innerText = "Status: Menghubungkan...";
-        addLog(`Menghubungkan ke ${bleDevice.name || 'Perangkat'}...`, "info");
+        bleDevice.addEventListener('gattserverdisconnected', () => {
+          statusText.innerText = "Status: Terputus";
+          statusText.style.color = "var(--danger)";
+          connectBtn.innerText = "Hubungkan Bluetooth";
+          addLog("Bluetooth Terputus!", "warning");
+        });
 
         const server = await bleDevice.gatt.connect();
         const service = await server.getPrimaryService(UART_SERVICE_UUID);
-        
         rxCharacteristic = await service.getCharacteristic(RX_CHARACTERISTIC_UUID);
 
         try {
           txCharacteristic = await service.getCharacteristic(TX_CHARACTERISTIC_UUID);
           await txCharacteristic.startNotifications();
           txCharacteristic.addEventListener('characteristicvaluechanged', handleIncomingData);
-          addLog("Fitur penerimaan data sensor (Input) aktif", "info");
-        } catch (e) {
-          addLog("Gagal mengaktifkan penerima data sensor (TX Characteristic)", "warning");
-        }
+        } catch (e) {}
 
         statusText.innerText = "Status: Terhubung";
         statusText.style.color = "var(--success)";
         connectBtn.innerText = "Putuskan Koneksi";
-        connectBtn.style.backgroundColor = "var(--danger)";
-        addLog("Bluetooth Micro:bit Berhasil Terhubung!", "success");
-
-      } catch (error) {
+        addLog("Bluetooth Berhasil Terhubung!", "success");
+      } catch (err) {
         statusText.innerText = "Status: Terputus";
-        statusText.style.color = "var(--danger)";
-
-        if (error.name === "NotFoundError") {
-          addLog("Pencarian dibatalkan oleh pengguna", "warning");
-        } else {
-          addLog(`Gagal Koneksi: ${error.message}`, "error");
-        }
+        addLog(`Gagal Koneksi: ${err.message}`, "error");
       }
     });
 
-    function onDisconnected() {
-      statusText.innerText = "Status: Terputus";
-      statusText.style.color = "var(--danger)";
-      connectBtn.innerText = "Hubungkan Bluetooth";
-      connectBtn.style.backgroundColor = "var(--accent)";
-      addLog("Koneksi Bluetooth Terputus!", "warning");
-    }
-
     function handleIncomingData(event) {
-      const decoder = new TextDecoder('utf-8');
-      const receivedString = decoder.decode(event.target.value).trim();
-      
-      addLog(`Data Masuk (Micro:bit): ${receivedString}`, "info");
+      const str = new TextDecoder().decode(event.target.value).trim();
+      addLog(`Data Masuk: ${str}`, "info");
+      const num = parseFloat(str.replace(/[^0-9.]/g, ''));
+      if (!isNaN(num)) addChartData(num);
 
-      if (receivedString.includes(':')) {
-        const parts = receivedString.split(':');
-        const key = parts[0].trim();
-        const val = parts[1].trim();
-        const customDisplay = document.getElementById(`widget_val_${key}`);
-        if (customDisplay) {
-          customDisplay.innerText = val;
-        }
-        updateChartData(val);
-      } else {
-        const inputWidgets = document.querySelectorAll('[id^="widget_val_"]');
-        inputWidgets.forEach(w => w.innerText = receivedString);
-        updateChartData(receivedString);
+      if (str.includes(':')) {
+        const [k, v] = str.split(':');
+        const el = document.getElementById(`widget_val_${k.trim()}`);
+        if (el) el.innerText = v.trim();
       }
     }
 
-    // KIRIM DATA KE MICRO:BIT
     async function sendBLEData(command) {
       if (!rxCharacteristic) {
-        addLog("Bluetooth belum terhubung!", "warning");
+        addLog(`[Simulasi Sinyal]: ${command}`, "warning");
         return;
       }
-
       try {
-        const encoder = new TextEncoder();
-        const payload = encoder.encode(command + "\n");
-        
-        if (rxCharacteristic.writeValueWithoutResponse) {
-          await rxCharacteristic.writeValueWithoutResponse(payload);
-        } else {
-          await rxCharacteristic.writeValue(payload);
-        }
-
-        addLog(`Terkirim ke Micro:bit: ${command}`, "success");
+        await rxCharacteristic.writeValue(new TextEncoder().encode(command + "\n"));
+        addLog(`Terkirim: ${command}`, "success");
       } catch (err) {
-        addLog(`Gagal mengirim data: ${err.message}`, "error");
+        addLog(`Gagal Kirim: ${err.message}`, "error");
       }
     }
 
-    // WASD KEYBOARD CONTROLLER (GAME / ROBLOX STYLE)
+    function sendCustomServo() {
+      const s1 = document.getElementById('servo1Range').value;
+      const s2 = document.getElementById('servo2Range').value;
+      sendBLEData(`servo:${s1},${s2}`);
+    }
+
+    // KEYBOARD WASD & CAPIT CONTROLLER
     const activeKeys = {};
-
     document.addEventListener('keydown', (e) => {
-      const wasdActive = document.getElementById('wasdToggle').checked;
-      if (!wasdActive || e.repeat) return;
-
-      const key = e.key.toLowerCase();
-
-      if (!activeKeys[key]) {
-        activeKeys[key] = true;
-
-        if (key === 'w') sendBLEData('up');
-        else if (key === 'a') sendBLEData('left');
-        else if (key === 'd') sendBLEData('right');
-        else if (key === 's') sendBLEData('back');
-        else if (key === ' ') sendBLEData('stop');
+      if (!document.getElementById('wasdToggle').checked || e.repeat) return;
+      const k = e.key.toLowerCase();
+      if (!activeKeys[k]) {
+        activeKeys[k] = true;
+        if (k === 'w') sendBLEData('up');
+        else if (k === 'a') sendBLEData('left');
+        else if (k === 'd') sendBLEData('right');
+        else if (k === 's') sendBLEData('back');
+        else if (k === 'j') sendBLEData('capit');
+        else if (k === 'k') sendBLEData('lepas');
+        else if (k === ' ') sendBLEData('stop');
       }
     });
 
     document.addEventListener('keyup', (e) => {
-      const wasdActive = document.getElementById('wasdToggle').checked;
-      if (!wasdActive) return;
-
-      const key = e.key.toLowerCase();
-
-      if (activeKeys[key]) {
-        delete activeKeys[key];
-
-        if (['w', 'a', 's', 'd'].includes(key)) {
-          sendBLEData('stop');
-        }
+      if (!document.getElementById('wasdToggle').checked) return;
+      const k = e.key.toLowerCase();
+      if (activeKeys[k]) {
+        delete activeKeys[k];
+        if (['w', 'a', 's', 'd'].includes(k)) sendBLEData('stop');
       }
     });
 
-    // =====================================================
-    // TEACHABLE MACHINE INTEGRATION DENGAN LOGIKA HISTERESIS
-    // =====================================================
-    let tmModel = null;
-    let tmWebcam = null;
-    let tmMaxPredictions = 0;
-    let tmIsRunning = false;
-    let tmLastSentClass = null; // Memori status kelas yang saat ini terkirim/aktif
-
-    // Default threshold
-    let tmSendThreshold = 0.85; // 85% untuk Mulai Kirim
-    let tmStopThreshold = 0.80; // 80% untuk Otomatis Stop
-
-    function updateTmThresholds() {
-      let sendVal = parseInt(document.getElementById('tmSendThreshSlider').value);
-      let stopVal = parseInt(document.getElementById('tmStopThreshSlider').value);
-
-      // Pastikan threshold stop tidak lebih tinggi dari threshold kirim
-      if (stopVal >= sendVal) {
-        stopVal = sendVal - 1;
-        document.getElementById('tmStopThreshSlider').value = stopVal;
-      }
-
-      tmSendThreshold = sendVal / 100;
-      tmStopThreshold = stopVal / 100;
-
-      document.getElementById('tmSendThreshVal').innerText = sendVal + '%';
-      document.getElementById('tmStopThreshVal').innerText = stopVal + '%';
-      document.getElementById('tmLastSentLabel').innerText = `Data aktif (>=${sendVal}%) / Auto Stop (<${stopVal}%)`;
-    }
-
-    function setTmStatus(text, type) {
-      const badge = document.getElementById('tmStatusBadge');
-      badge.innerText = text;
-      badge.className = 'tm-status-badge tm-status-' + type;
-    }
-
+    // TEACHABLE MACHINE INTEGRATION
+    let tmModel = null, tmWebcam = null, tmIsRunning = false, tmLastSentClass = null;
     async function loadTeachableModel() {
       let url = document.getElementById('tmModelUrl').value.trim();
-      if (!url) {
-        alert("Masukkan link model Teachable Machine terlebih dahulu!");
-        return;
-      }
-
-      if (url.endsWith('/')) {
-        url = url.slice(0, -1);
-      }
-
-      const modelURL = url + "/model.json";
-      const metadataURL = url + "/metadata.json";
-
-      setTmStatus("Memuat model...", "loading");
-      document.getElementById('tmLoadBtn').disabled = true;
-      addLog("Memuat model Teachable Machine...", "info");
+      if (!url) return alert("Masukkan URL Model terlebih dahulu!");
+      if (url.endsWith('/')) url = url.slice(0, -1);
 
       try {
-        if (tmWebcam) {
-          tmWebcam.stop();
-          tmWebcam = null;
-        }
-        tmIsRunning = false;
-
-        tmModel = await tmImage.load(modelURL, metadataURL);
-        tmMaxPredictions = tmModel.getTotalClasses();
-
+        tmModel = await tmImage.load(url + "/model.json", url + "/metadata.json");
         const flip = true;
         tmWebcam = new tmImage.Webcam(400, 300, flip);
         await tmWebcam.setup();
         await tmWebcam.play();
-
+        
         const container = document.getElementById('tmWebcamContainer');
         container.innerHTML = '';
         container.appendChild(tmWebcam.canvas);
 
-        const predList = document.getElementById('tmPredictionList');
-        predList.innerHTML = '';
-        for (let i = 0; i < tmMaxPredictions; i++) {
-          const item = document.createElement('div');
-          item.className = 'tm-pred-item';
-          item.id = `tm-pred-${i}`;
-          item.innerHTML = `
-            <span class="tm-class-name">Class ${i}</span>
-            <span class="tm-confidence">0%</span>
-          `;
-          predList.appendChild(item);
-        }
-
-        document.getElementById('tmLastSentBox').style.display = 'block';
         document.getElementById('tmStopBtn').style.display = 'inline-block';
-        document.getElementById('tmLoadBtn').disabled = false;
-
-        setTmStatus("Aktif - Deteksi Kamera", "ready");
-        addLog("Model Teachable Machine berhasil dimuat & kamera aktif", "success");
-
         tmIsRunning = true;
-        tmLastSentClass = null;
         window.requestAnimationFrame(tmLoop);
-
-      } catch (err) {
-        console.error(err);
-        setTmStatus("Gagal memuat model", "error");
-        document.getElementById('tmLoadBtn').disabled = false;
-        addLog(`Gagal memuat Teachable Machine: ${err.message}`, "error");
-        alert("Gagal memuat model. Pastikan link valid dan model sudah di-export ke cloud.");
+        addLog("Teachable Machine Berhasil Dimuat", "success");
+      } catch(err) {
+        alert("Gagal memuat model!");
       }
     }
 
     function stopTeachableModel() {
       tmIsRunning = false;
-      if (tmWebcam) {
-        tmWebcam.stop();
-        tmWebcam = null;
-      }
-
-      // Jika ada pergerakan yang belum distop saat kamera dimatikan
-      if (tmLastSentClass) {
-        sendBLEData('stop');
-        tmLastSentClass = null;
-      }
-
-      document.getElementById('tmWebcamContainer').innerHTML = `
-        <div class="tm-placeholder" id="tmPlaceholder">
-          Kamera dihentikan.<br>Tekan <strong>Load Model & Kamera</strong> untuk memulai lagi.
-        </div>
-      `;
-      document.getElementById('tmPredictionList').innerHTML = '';
-      document.getElementById('tmLastSentBox').style.display = 'none';
+      if (tmWebcam) tmWebcam.stop();
+      document.getElementById('tmWebcamContainer').innerHTML = '<div class="tm-placeholder">Kamera Dihentikan</div>';
       document.getElementById('tmStopBtn').style.display = 'none';
-      document.getElementById('tmLoadBtn').disabled = false;
-      setTmStatus("Dihentikan", "idle");
-      addLog("Teachable Machine dihentikan", "warning");
     }
 
     async function tmLoop() {
@@ -1329,78 +968,111 @@
 
     async function tmPredict() {
       if (!tmModel || !tmWebcam) return;
-
       const prediction = await tmModel.predict(tmWebcam.canvas);
-      const isAutoSendActive = document.getElementById('tmAutoSendToggle').checked;
-
-      // Cari prediksi tertinggi
-      let bestIndex = 0;
-      let bestProb = 0;
-      for (let i = 0; i < tmMaxPredictions; i++) {
+      let bestIdx = 0, bestProb = 0;
+      for (let i = 0; i < prediction.length; i++) {
         if (prediction[i].probability > bestProb) {
           bestProb = prediction[i].probability;
-          bestIndex = i;
+          bestIdx = i;
         }
       }
 
-      // Update UI Tampilan Prediksi
-      for (let i = 0; i < tmMaxPredictions; i++) {
-        const item = document.getElementById(`tm-pred-${i}`);
-        if (!item) continue;
+      const sendThresh = parseInt(document.getElementById('sendThreshRange').value) / 100;
+      const stopThresh = parseInt(document.getElementById('stopThreshRange').value) / 100;
+      const autoSend = document.getElementById('tmAutoSendToggle').checked;
 
-        const prob = prediction[i].probability;
-        const pct = Math.round(prob * 100);
-        item.querySelector('.tm-class-name').innerText = prediction[i].className;
-        const confEl = item.querySelector('.tm-confidence');
-        confEl.innerText = pct + '%';
-
-        item.classList.remove('active', 'low');
-        confEl.classList.remove('high', 'low');
-
-        if (i === bestIndex) {
-          if (prob >= tmSendThreshold) {
-            item.classList.add('active');
-            confEl.classList.add('high');
-          } else if (prob >= tmStopThreshold) {
-            item.classList.add('low');
-            confEl.classList.add('low');
-          }
-        }
-      }
-
-      const bestClass = prediction[bestIndex].className;
-
-      // =====================================================
-      // LOGIKA AKURASI BARU (SEND >= 85% & STOP < 80%)
-      // =====================================================
-      if (isAutoSendActive) {
-        // PERINTAH 1: KONDISI DI ATAS / SAMA DENGAN THRESHOLD KIRIM (>= 85%)
-        if (bestProb >= tmSendThreshold) {
+      const bestClass = prediction[bestIdx].className;
+      if (autoSend) {
+        if (bestProb >= sendThresh) {
           if (bestClass !== tmLastSentClass) {
             tmLastSentClass = bestClass;
-            document.getElementById('tmLastSentValue').innerText = bestClass;
             sendBLEData(bestClass);
-            addLog(`TM AI (≥${Math.round(tmSendThreshold*100)}%): "${bestClass}" -> Dikirim`, "success");
           }
-        }
-        // PERINTAH 2: KONDISI AKURASI TURUN DI BEWAH THRESHOLD STOP (< 80%)
-        else if (bestProb < tmStopThreshold) {
-          // Jika sebelumnya sedang dalam keadaan mengirim data perintah aktif
-          if (tmLastSentClass !== null) {
-            sendBLEData('stop');
-            addLog(`TM AI (<${Math.round(tmStopThreshold*100)}%): Akurasi Turun -> Auto STOP Sent`, "warning");
-            tmLastSentClass = null; // Reset memori kelas
-            document.getElementById('tmLastSentValue').innerText = "STANDBY / STOP";
-          }
-        }
-      } else {
-        // Jika sakelar pengiriman otomatis OFF
-        if (tmLastSentClass !== null) {
+        } else if (bestProb < stopThresh && tmLastSentClass !== null) {
           tmLastSentClass = null;
-          document.getElementById('tmLastSentValue').innerText = "TOGGLE BLE OFF";
+          sendBLEData('stop');
         }
       }
     }
+
+    // JSON EXPORT & IMPORT
+    function exportDataJSON() {
+      const blob = new Blob([JSON.stringify(appConfig, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'bt_controller_config.json';
+      a.click();
+    }
+
+    function importDataJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          appConfig = JSON.parse(evt.target.result);
+          saveAppData();
+          location.reload();
+        } catch(err) {
+          alert("File JSON tidak valid!");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function createCustomWidget() {
+      const name = document.getElementById('builderName').value.trim();
+      const key = document.getElementById('builderKey').value.trim();
+      const category = document.getElementById('builderCategory').value;
+      if (!name || !key) return alert("Isi nama dan key terlebih dahulu!");
+
+      appConfig.widgets.push({ name, key, category });
+      saveAppData();
+      renderSavedWidgets();
+      alert("Widget Berhasil Dibuat!");
+    }
+
+    function renderSavedWidgets() {
+      const grid = document.getElementById('dashboardWidgets');
+      grid.innerHTML = '<div class="widget-card"><h3>Status Sistem</h3><p style="color: var(--text-muted);">Sistem siap.</p></div>';
+      appConfig.widgets.forEach(w => {
+        const card = document.createElement('div');
+        card.className = "widget-card";
+        if (w.category === "input") {
+          card.innerHTML = `
+            <div class="widget-header">
+              <h3>${w.name} (Input)</h3>
+              <button class="btn btn-danger btn-sm" onclick="removeWidget('${w.key}')">🗑️</button>
+            </div>
+            <div id="widget_val_${w.key}" class="sensor-value">--</div>
+          `;
+        } else {
+          card.innerHTML = `
+            <div class="widget-header">
+              <h3>${w.name} (Output)</h3>
+              <button class="btn btn-danger btn-sm" onclick="removeWidget('${w.key}')">🗑️</button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <button class="btn" onclick="sendBLEData('${w.key},1')">Send 1</button>
+              <button class="btn btn-danger" onclick="sendBLEData('${w.key},0')">Send 0</button>
+            </div>
+          `;
+        }
+        grid.appendChild(card);
+      });
+    }
+
+    function removeWidget(key) {
+      appConfig.widgets = appConfig.widgets.filter(w => w.key !== key);
+      saveAppData();
+      renderSavedWidgets();
+    }
+
+    // INITIAL STARTUP
+    window.onload = () => {
+      loadSavedData();
+      initChart();
+    };
   </script>
 </body>
 </html>
