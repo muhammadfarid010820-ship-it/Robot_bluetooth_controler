@@ -6,10 +6,12 @@
   <title id="docTitle">Controller Bluetooth</title>
   
   <!-- CDN External Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-dark: #0f172a;
@@ -21,7 +23,7 @@
       --danger: #ef4444;
       --success: #10b981;
       --warning: #f59e0b;
-      --purple: #8b5cf6;
+      --purple: #14b8a6;
     }
 
     body.light-theme {
@@ -98,7 +100,7 @@
       pointer-events: auto !important;
     }
 
-    /* --- NAVBAR KIRI (LAPTOP) --- */
+    /* --- NAVBAR KIRI --- */
     .sidebar {
       width: 250px;
       background: var(--panel-dark);
@@ -157,44 +159,6 @@
     .nav-btn:hover, .nav-btn.active {
       background: var(--accent);
       color: #fff;
-    }
-
-    /* --- BOTTOM NAVBAR (HP / MOBILE) --- */
-    .mobile-bottom-nav {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: var(--panel-dark);
-      border-top: 1px solid var(--border-color);
-      z-index: 100;
-      justify-content: space-around;
-      align-items: center;
-      padding: 0 4px;
-    }
-
-    .mobile-nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      font-size: 0.7rem;
-      background: none;
-      border: none;
-      cursor: pointer;
-      flex: 1;
-      height: 100%;
-      gap: 2px;
-    }
-    .mobile-nav-item.active {
-      color: var(--accent);
-      font-weight: bold;
-    }
-    .mobile-nav-item span.icon {
-      font-size: 1.2rem;
     }
 
     /* --- MAIN CONTENT --- */
@@ -433,67 +397,219 @@
     .tm-confidence { font-weight: bold; color: var(--accent); }
     .tm-confidence.high { color: var(--success); }
 
-    /* ======================================================= */
-    /* RESPONSIVE MEDIA QUERIES (PENYESUAIAN KHUSUS HP)        */
-    /* ======================================================= */
-    @media (max-width: 768px) {
-      body {
-        flex-direction: column;
-      }
-
-      /* Sembunyikan Sidebar Kiri di HP */
-      .sidebar {
-        display: none;
-      }
-
-      /* Tampilkan Bottom Nav Bar di HP */
-      .mobile-bottom-nav {
-        display: flex;
-      }
-
-      /* Sembunyikan Panel Log Kanan di HP */
-      .activity-panel {
-        display: none;
-      }
-
-      /* Main Content Memenuhi Layar HP */
-      .main-content {
-        padding: 1rem;
-        padding-bottom: 80px; /* Jarak untuk Bottom Nav */
-      }
-
-      .top-bar {
-        padding: 0.8rem;
-        font-size: 0.85rem;
-      }
-
-      /* Pembesaran Tombol D-Pad di HP agar Mudah Ditekan Jari */
-      .d-pad {
-        grid-template-columns: repeat(3, 85px);
-        grid-template-rows: repeat(3, 85px);
-        gap: 12px;
-      }
-
-      .d-pad .btn {
-        font-size: 1.8rem;
-      }
-
-      .gripper-controls .btn {
-        padding: 14px;
-        font-size: 1rem;
-      }
-
-      .widget-grid {
-        grid-template-columns: 1fr;
-      }
+    /* SMART PARKING */
+    .park-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+    .park-slot {
+      border: 2px solid var(--success); background: rgba(16,185,129,0.1);
+      border-radius: 8px; padding: 14px 10px; text-align: center; cursor: pointer; user-select: none;
     }
+    .park-slot.busy { border-color: var(--danger); background: rgba(239,68,68,0.12); }
+    .park-ico { font-size: 2rem; line-height: 1.2; }
+    .park-slot b { font-size: 1.1rem; display: block; }
+    .park-slot small { color: var(--text-muted); display: block; margin-top: 4px; min-height: 1.1em; }
+    .park-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
+
+    /* ===== TEMA UI: KREATIF GELAP (hanya tampilan) ===== */
+    :root {
+      --bg-dark: #09090f; --panel-dark: #12121b; --panel-2: #191925;
+      --text-color: #f4f4f9; --text-muted: #8c8ca6; --border-color: #25253a;
+      --accent: #3b82f6; --danger: #f43f5e; --success: #22c55e; --warning: #f59e0b; --purple: #14b8a6;
+      --grad: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      --glow: 0 6px 24px rgba(59, 130, 246, 0.35);
+    }
+    body.light-theme {
+      --bg-dark: #f4f4fa; --panel-dark: #ffffff; --panel-2: #f0f0f8;
+      --text-color: #14141f; --text-muted: #6a6a85; --border-color: #e2e2ee;
+      --glow: 0 6px 20px rgba(59, 130, 246, 0.25);
+    }
+    * { font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, sans-serif; }
+    code { font-family: ui-monospace, Consolas, monospace; background: var(--panel-2); padding: 1px 6px; border-radius: 6px; font-size: 0.85em; }
+    body { background: radial-gradient(900px 500px at 8% -10%, rgba(59,130,246,0.16), transparent 60%), var(--bg-dark); }
+    body.light-theme { background: radial-gradient(900px 500px at 8% -10%, rgba(59,130,246,0.10), transparent 60%), var(--bg-dark); }
+    h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+    h3 { font-size: 1rem; font-weight: 700; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 8px; }
+
+    .lock-card { border-radius: 24px; padding: 2.5rem 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.5), var(--glow); }
+    .lock-card input { border-radius: 14px; }
+
+    .sidebar { background: var(--panel-dark); padding: 1.2rem 1rem; gap: 0.35rem; }
+    .profile-card { margin-bottom: 0.6rem; padding-bottom: 1rem; }
+    .profile-img { border-color: transparent; box-shadow: 0 0 0 2px var(--accent); }
+    .role-badge { border-radius: 999px; padding: 2px 10px; }
+    #webTitleNav { font-weight: 800; letter-spacing: -0.02em; margin: 0.4rem 0 0.6rem; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+    .nav-btn { border-radius: 12px; padding: 11px 14px; font-weight: 600; }
+    .nav-btn:hover { background: var(--panel-2); color: var(--text-color); }
+    .nav-btn.active { background-image: var(--grad); color: #fff; box-shadow: var(--glow); }
+
+    .main-content { padding: 1.75rem; }
+    .top-bar { border-radius: 18px; padding: 0.9rem 1.2rem; }
+    .widget-card { border-radius: 20px; padding: 1.4rem; }
+    .widget-card:hover { border-color: rgba(59, 130, 246, 0.45); }
+    .sensor-value { font-weight: 800; letter-spacing: -0.02em; }
+
+    .btn { background-image: var(--grad); border-radius: 12px; font-weight: 700; padding: 10px 18px; }
+    .btn:hover { opacity: 1; filter: brightness(1.1); box-shadow: var(--glow); }
+    .btn-danger, .btn-warning, .btn-purple, .btn-success { background-image: none; }
+    .btn-danger:hover, .btn-warning:hover, .btn-purple:hover, .btn-success:hover { box-shadow: none; }
+    .btn-sm { border-radius: 10px; }
+
+    .form-control { border-radius: 12px; padding: 11px 12px; background: var(--panel-2); }
+    .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); }
+    input[type=range] { accent-color: var(--accent); }
+    input:checked + .slider-toggle { background-image: var(--grad); }
+    .slider-toggle { background-color: var(--border-color); }
+
+    .activity-panel { padding: 1.2rem 1rem; }
+    .activity-logs { border-radius: 16px; background: var(--panel-2); }
+    .log-card { border-radius: 10px; }
+
+    .park-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+    .park-slot { border-radius: 18px; padding: 18px 10px; border-width: 1.5px; transition: transform 0.15s, box-shadow 0.2s; }
+    .park-slot:hover { transform: translateY(-2px); }
+    .park-slot:not(.busy) { box-shadow: 0 0 22px rgba(34, 197, 94, 0.12); }
+    .park-slot.busy { box-shadow: 0 0 22px rgba(244, 63, 94, 0.18); }
+    .park-slot span { font-weight: 600; font-size: 0.9rem; }
+    .tm-webcam-container, .tm-pred-item { border-radius: 14px; }
+    .park-row { border-color: var(--border-color); }
+
+    .widget-grid { grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); }
+
+    @media (max-width: 1100px) { .activity-panel { width: 250px; } .sidebar { width: 210px; } }
+    @media (max-width: 860px) {
+      body { height: auto; overflow: auto; display: block; }
+      #app-container { flex-direction: column; height: auto; min-height: 100vh; width: 100%; }
+      .sidebar { width: 100%; flex-direction: row; align-items: center; overflow-x: auto; overflow-y: hidden; border-right: none; border-bottom: 1px solid var(--border-color); padding: 0.7rem; gap: 0.4rem; }
+      .profile-card { border: none; padding: 0; margin: 0 0.4rem 0 0; flex: none; }
+      .profile-info { display: none; }
+      #webTitleNav { display: none; }
+      .nav-btn { width: auto; white-space: nowrap; flex: none; padding: 9px 12px; }
+      .sidebar > div[style*="margin-top"] { margin: 0 0 0 auto !important; flex: none; }
+      .main-content { overflow: visible; padding: 1rem; }
+      .activity-panel { width: 100%; height: 260px; border-left: none; border-top: 1px solid var(--border-color); }
+      .top-bar { flex-direction: column; gap: 0.7rem; align-items: stretch; text-align: center; }
+    }
+
+    /* ===== IKON VEKTOR ===== */
+    .ic { width: 1.15em; height: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.2em; flex: none; }
+    .d-pad .ic { width: 1.7rem; height: 1.7rem; stroke-width: 2.6; }
+    .park-ico { color: var(--success); }
+    .park-slot.busy .park-ico { color: var(--danger); }
+    .park-ico .ic { width: 2.6rem; height: 2.6rem; stroke-width: 1.5; }
+    h2 .ic, h3 .ic { vertical-align: -0.15em; color: var(--accent); }
+    .gripper-controls .ic { width: 1.6em; height: 1.6em; stroke-width: 2.2; }
+
+    /* ===== EFEK 3D LAYAR PASSWORD (hanya tampilan) ===== */
+    #lock-screen { background: rgba(9, 9, 15, 0.96); perspective: 1100px; overflow: hidden; }
+    #lock-screen::before {
+      content: ''; position: absolute; width: 140%; height: 140%; z-index: 0; pointer-events: none;
+      background: radial-gradient(420px circle at 25% 30%, rgba(59,130,246,0.30), transparent 60%),
+                  radial-gradient(380px circle at 78% 70%, rgba(6,182,212,0.24), transparent 60%);
+      animation: lockDrift 14s ease-in-out infinite alternate;
+    }
+    #lock-screen::after {
+      content: ''; position: absolute; left: -50%; bottom: -12%; width: 200%; height: 62%; z-index: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(59,130,246,0.28) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.28) 1px, transparent 1px);
+      background-size: 56px 56px;
+      transform: rotateX(72deg); transform-origin: bottom;
+      -webkit-mask-image: linear-gradient(to top, #000, transparent 85%); mask-image: linear-gradient(to top, #000, transparent 85%);
+      animation: lockGrid 5s linear infinite;
+    }
+    @keyframes lockDrift { to { transform: translate(-6%, -5%) scale(1.08); } }
+    @keyframes lockGrid { to { background-position: 0 56px; } }
+
+    .lock-card {
+      position: relative; z-index: 1; transform-style: preserve-3d;
+      transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+      transition: transform 0.15s ease-out;
+      padding: 3.4rem 2rem 2.2rem;
+      background: linear-gradient(145deg, var(--panel-2), var(--panel-dark));
+      box-shadow: 0 50px 90px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05) inset, 0 0 50px rgba(59,130,246,0.18);
+    }
+    .lock-card::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+      background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 0%), rgba(255,255,255,0.10), transparent 60%);
+    }
+    .lock-badge {
+      width: 84px; height: 84px; margin: -6.2rem auto 1.2rem; border-radius: 26px; display: grid; place-items: center;
+      background: var(--grad); color: #fff; transform: translateZ(80px);
+      box-shadow: 0 22px 34px rgba(59,130,246,0.5), inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -7px 0 rgba(0,0,0,0.2);
+      animation: lockFloat 3.2s ease-in-out infinite;
+    }
+    .lock-badge .ic { width: 40px; height: 40px; stroke-width: 1.8; filter: drop-shadow(0 3px 2px rgba(0,0,0,0.25)); }
+    @keyframes lockFloat { 0%, 100% { transform: translateZ(80px) translateY(0); } 50% { transform: translateZ(80px) translateY(-9px); } }
+    .lock-card h2 { transform: translateZ(45px); }
+    .lock-card p { transform: translateZ(25px); }
+    .lock-card input { transform: translateZ(30px); box-shadow: inset 0 3px 8px rgba(0,0,0,0.35), 0 10px 20px rgba(0,0,0,0.25); }
+    .lock-card input:focus { outline: none; border-color: var(--accent); box-shadow: inset 0 3px 8px rgba(0,0,0,0.35), 0 0 0 3px rgba(59,130,246,0.3); }
+    .lock-card .btn {
+      transform: translateZ(40px); border-radius: 14px; padding: 13px 18px;
+      box-shadow: 0 6px 0 #1d4ed8, 0 16px 26px rgba(59,130,246,0.35);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .lock-card .btn:active { transform: translateZ(40px) translateY(5px); box-shadow: 0 1px 0 #1d4ed8, 0 6px 12px rgba(59,130,246,0.3); }
+    @media (prefers-reduced-motion: reduce) {
+      #lock-screen::before, #lock-screen::after, .lock-badge { animation: none; }
+      .lock-card { transform: none !important; }
+    }
+
+    /* ===== ANIMASI MOBIL VEKTOR DI SLOT ===== */
+    .pk-bay { position: relative; width: 62px; height: 100px; margin: 0 auto 10px; overflow: hidden; border: 3px solid rgba(255,255,255,0.3); border-bottom: none; border-radius: 10px 10px 0 0; background: repeating-linear-gradient(180deg, rgba(255,255,255,0.03) 0 8px, transparent 8px 16px); }
+    body.light-theme .pk-bay { border-color: rgba(0,0,0,0.25); }
+    .park-slot .pk-p { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.9rem; font-weight: 800; color: rgba(255,255,255,0.18); transition: opacity 0.4s; }
+    body.light-theme .park-slot .pk-p { color: rgba(0,0,0,0.18); }
+    .park-slot.busy .pk-p { opacity: 0; }
+    .pk-car { position: absolute; left: 50%; bottom: 8px; width: 38px; height: auto; transform: translate(-50%, 165%); transition: transform 0.7s cubic-bezier(0.5, 0, 0.75, 0); filter: drop-shadow(0 6px 5px rgba(0,0,0,0.5)); }
+    .park-slot.busy .pk-car { transform: translate(-50%, 0); transition: transform 1s cubic-bezier(0.34, 1.25, 0.64, 1); }
+    .car-body { fill: var(--car, #3b82f6); }
+    .car-roof { fill: #000; opacity: 0.16; }
+    .car-win { fill: #0b0b12; opacity: 0.78; }
+    .car-tire { fill: #0b0b12; }
+    .car-lf { fill: #fff6b8; }
+    .car-lr { fill: #ff4d6a; }
+    @media (prefers-reduced-motion: reduce) { .pk-car, .park-slot.busy .pk-car { transition: none; } }
+
+    /* ===== UPGRADE: SMART PARKING ===== */
+    .occ-bar { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; }
+    .occ-fill { height: 100%; width: 0; border-radius: 99px; background: var(--success); transition: width .5s, background .3s; }
+    .park-slot .pk-time { font-weight: 600; }
+    .park-row b { font-variant-numeric: tabular-nums; }
+    .park-full-banner { display: none; background: rgba(244,63,94,.15); border: 1px solid var(--danger); color: var(--danger); font-weight: 800; text-align: center; padding: 10px; border-radius: 12px; letter-spacing: .08em; }
+    .park-full-banner.show { display: block; animation: pkPulse 1.2s ease-in-out infinite; }
+    @keyframes pkPulse { 50% { box-shadow: 0 0 22px rgba(244,63,94,.45); } }
+    @media (prefers-reduced-motion: reduce) { .park-full-banner.show { animation: none; } }
   </style>
 </head>
 <body>
 
+  <!-- IKON VEKTOR (SVG sprite) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="11" width="8" height="10" rx="2"/><rect x="3" y="14" width="8" height="7" rx="2"/></symbol>
+    <symbol id="i-builder" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M12 8v8M8 12h8"/></symbol>
+    <symbol id="i-gamepad" viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" rx="5.5"/><path d="M7 10v4M5 12h4"/><circle cx="15.5" cy="11" r=".8"/><circle cx="18" cy="13" r=".8"/></symbol>
+    <symbol id="i-ai" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="3"/><circle cx="12" cy="13.5" r="3.5"/><path d="M9 7l1.5-2.5h3L15 7"/></symbol>
+    <symbol id="i-parking" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M9.5 17V7.5h3.2a2.9 2.9 0 0 1 0 5.8H9.5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-9"/><path d="M3 21h18"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="M3 13l2-5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 19 8l2 5v4a1 1 0 0 1-1 1h-1v1.5h-3V18H8v1.5H5V18H4a1 1 0 0 1-1-1z"/><path d="M3 13h18"/><circle cx="7.5" cy="15.5" r=".9"/><circle cx="16.5" cy="15.5" r=".9"/></symbol>
+    <symbol id="i-gate" viewBox="0 0 24 24"><path d="M5 20V6M3 20h4"/><rect x="5" y="10" width="16" height="4" rx="1"/><path d="M10 10v4M14 10v4M18 10v4"/></symbol>
+    <symbol id="i-grab" viewBox="0 0 24 24"><path d="M3 12h6M6.5 9.5L9 12l-2.5 2.5M21 12h-6M17.5 9.5L15 12l2.5 2.5"/></symbol>
+    <symbol id="i-release" viewBox="0 0 24 24"><path d="M9 12H3M5.5 9.5L3 12l2.5 2.5M15 12h6M18.5 9.5L21 12l-2.5 2.5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M4 20h16"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7 9l5-5 5 5M4 20h16"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.9M4 4v5h5"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></symbol>
+  </svg>
+
   <!-- LAYAR KUNCI -->
   <div id="lock-screen">
     <div class="lock-card">
+      <div class="lock-badge"><svg class="ic"><use href="#i-lock"/></svg></div>
       <h2 id="lockWebTitle">Controller Bluetooth</h2>
       <p style="color: var(--text-muted);">Masukkan Password Akses</p>
       <input type="password" id="pinInput" placeholder="••••••" onkeydown="if(event.key==='Enter') unlockWebsite()">
@@ -504,7 +620,7 @@
   <!-- CONTAINER APLIKASI -->
   <div id="app-container">
     
-    <!-- NAVBAR KIRI (TAMPILAN LAPTOP / TABLET) -->
+    <!-- NAVBAR KIRI -->
     <div class="sidebar">
       <div class="profile-card">
         <img id="userImgNav" src="Membawa Sajam.jpg" class="profile-img" alt="Foto Profil">
@@ -516,14 +632,15 @@
 
       <h2 id="webTitleNav" style="font-size: 1.1rem; color: var(--accent);">Controller Bluetooth</h2>
       
-      <button class="nav-btn active" onclick="switchPage('dashboard')">📊 Dashboard</button>
-      <button class="nav-btn" onclick="switchPage('builder')">🛠️ Widget Builder</button>
-      <button class="nav-btn" onclick="switchPage('controller')">🎮 Controller & Capit</button>
-      <button class="nav-btn" onclick="switchPage('teachable')">🤖 Teachable Machine</button>
-      <button id="navSettingBtn" class="nav-btn" onclick="switchPage('setting')">⚙️ Settings & Backup</button>
+      <button class="nav-btn active" onclick="switchPage('dashboard')"><svg class="ic"><use href="#i-dashboard"/></svg> Dashboard</button>
+      <button class="nav-btn" onclick="switchPage('builder')"><svg class="ic"><use href="#i-builder"/></svg> Widget Builder</button>
+      <button class="nav-btn" onclick="switchPage('controller')"><svg class="ic"><use href="#i-gamepad"/></svg> Controller & Capit</button>
+      <button class="nav-btn" onclick="switchPage('teachable')"><svg class="ic"><use href="#i-ai"/></svg> Teachable Machine</button>
+      <button class="nav-btn" onclick="switchPage('parking')"><svg class="ic"><use href="#i-parking"/></svg> Smart Parking</button>
+      <button id="navSettingBtn" class="nav-btn" onclick="switchPage('setting')"><svg class="ic"><use href="#i-settings"/></svg> Settings & Backup</button>
 
       <div style="margin-top: auto;">
-        <button class="btn btn-danger" style="width: 100%;" onclick="lockWebsite()">🔒 Kunci Web</button>
+        <button class="btn btn-danger" style="width: 100%;" onclick="lockWebsite()"><svg class="ic"><use href="#i-lock"/></svg> Kunci Web</button>
       </div>
     </div>
 
@@ -538,17 +655,34 @@
 
       <!-- PAGE: DASHBOARD -->
       <div id="dashboard" class="page active">
-        <h2 style="margin-bottom: 1rem;">Dashboard Monitor & Control</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2>Dashboard Monitor & Control</h2>
+          <button id="dashRestoreBtn" class="btn btn-warning btn-sm" style="display: none;" onclick="restoreDashCards()"></button>
+        </div>
         
         <!-- CHART SENSOR REALTIME -->
-        <div class="widget-card" style="margin-bottom: 1.5rem;">
+        <div id="dashChartCard" class="widget-card" style="margin-bottom: 1.5rem;">
           <div class="widget-header">
-            <h3>📈 Sensor Real-time Chart</h3>
-            <button class="btn btn-sm" onclick="clearChart()">Reset Grafik</button>
+            <h3><svg class="ic"><use href="#i-chart"/></svg> Sensor Real-time Chart</h3>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-sm" onclick="clearChart()">Reset Grafik</button>
+              <button class="btn btn-danger btn-sm" title="Sembunyikan kartu" onclick="hideDashCard('dashChartCard')"><svg class="ic"><use href="#i-trash"/></svg></button>
+            </div>
           </div>
           <div style="height: 250px; width: 100%;">
             <canvas id="sensorChart"></canvas>
           </div>
+        </div>
+
+        <div id="dashParkCard" class="widget-card" style="margin-bottom: 1.5rem;">
+          <div class="widget-header">
+            <h3><svg class="ic"><use href="#i-parking"/></svg> Status Parkir</h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <span id="parkDashSummary" style="font-weight: bold;"></span>
+              <button class="btn btn-danger btn-sm" title="Sembunyikan kartu" onclick="hideDashCard('dashParkCard')"><svg class="ic"><use href="#i-trash"/></svg></button>
+            </div>
+          </div>
+          <div id="parkDashGrid" class="park-grid"></div>
         </div>
 
         <div id="dashboardWidgets" class="widget-grid">
@@ -580,6 +714,20 @@
           </div>
           <button class="btn" style="margin-top: 10px;" onclick="createCustomWidget()">+ Buat Widget</button>
         </div>
+
+        <div class="widget-card" style="max-width: 500px; margin-top: 1.5rem;">
+          <h3><svg class="ic"><use href="#i-parking"/></svg> Konfigurasi Slot Parkir</h3>
+          <div class="form-group">
+            <label>Jumlah Slot Parkir (1-12):</label>
+            <input type="number" id="parkSlotCount" class="form-control" min="1" max="12">
+          </div>
+          <div class="form-group">
+            <label>Tarif Parkir per Jam (Rp):</label>
+            <input type="number" id="parkRate" class="form-control" min="0" step="500">
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Micro:bit mengirim <code>masuk1:1</code> (terisi) atau <code>masuk1:0</code> (kosong), dst. sesuai nomor slot.</p>
+          <button class="btn" onclick="parkingSave()">Simpan Jumlah Slot</button>
+        </div>
       </div>
 
       <!-- PAGE: CONTROLLER (D-Pad + CAPIT / DOUBLE SERVO) -->
@@ -587,7 +735,7 @@
         <h2 style="margin-bottom: 1rem;">Robot Controller & Fitur Capit</h2>
         <div class="widget-card" style="align-items: center; max-width: 500px; margin: 0 auto;">
           <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 1rem;">
-            <span>Mode Keyboard WASD & J/K (Laptop):</span>
+            <span>Gunakan Mode Keyboard (WASD & J/K Capit):</span>
             <label class="switch">
               <input type="checkbox" id="wasdToggle">
               <span class="slider-toggle"></span>
@@ -598,15 +746,15 @@
           <div class="d-pad-container">
             <!-- FITUR TOMBOL CAPIT DUA SERVO -->
             <div class="gripper-controls">
-              <button class="btn btn-purple" 
+              <button class="btn" 
                       onclick="sendBLEData('capit')" 
                       title="Shortkey Keyboard: J">
-                🤏 Capit (Jepit)
+                <svg class="ic"><use href="#i-grab"/></svg> Capit (Jepit)
               </button>
-              <button class="btn btn-warning" 
+              <button class="btn" 
                       onclick="sendBLEData('lepas')" 
                       title="Shortkey Keyboard: K">
-                🖐️ Lepas (Buka)
+                <svg class="ic"><use href="#i-release"/></svg> Lepas (Buka)
               </button>
             </div>
 
@@ -618,7 +766,7 @@
                       onmouseup="sendBLEData('stop')" 
                       onmouseleave="sendBLEData('stop')"
                       ontouchstart="sendBLEData('up'); event.preventDefault();" 
-                      ontouchend="sendBLEData('stop'); event.preventDefault();">▲</button>
+                      ontouchend="sendBLEData('stop'); event.preventDefault();"><svg class="ic"><use href="#i-up"/></svg></button>
               <div></div>
 
               <button class="btn" 
@@ -626,16 +774,16 @@
                       onmouseup="sendBLEData('stop')" 
                       onmouseleave="sendBLEData('stop')"
                       ontouchstart="sendBLEData('left'); event.preventDefault();" 
-                      ontouchend="sendBLEData('stop'); event.preventDefault();">◄</button>
+                      ontouchend="sendBLEData('stop'); event.preventDefault();"><svg class="ic" style="transform:rotate(-90deg)"><use href="#i-up"/></svg></button>
 
-              <button class="btn btn-danger" onclick="sendBLEData('stop')">■</button>
+              <button class="btn btn-danger" onclick="sendBLEData('stop')"><svg class="ic"><use href="#i-stop"/></svg></button>
 
               <button class="btn" 
                       onmousedown="sendBLEData('right')" 
                       onmouseup="sendBLEData('stop')" 
                       onmouseleave="sendBLEData('stop')"
                       ontouchstart="sendBLEData('right'); event.preventDefault();" 
-                      ontouchend="sendBLEData('stop'); event.preventDefault();">►</button>
+                      ontouchend="sendBLEData('stop'); event.preventDefault();"><svg class="ic" style="transform:rotate(90deg)"><use href="#i-up"/></svg></button>
               <div></div>
 
               <button class="btn" 
@@ -643,7 +791,7 @@
                       onmouseup="sendBLEData('stop')" 
                       onmouseleave="sendBLEData('stop')"
                       ontouchstart="sendBLEData('back'); event.preventDefault();" 
-                      ontouchend="sendBLEData('stop'); event.preventDefault();">▼</button>
+                      ontouchend="sendBLEData('stop'); event.preventDefault();"><svg class="ic" style="transform:rotate(180deg)"><use href="#i-up"/></svg></button>
               <div></div>
             </div>
           </div>
@@ -693,8 +841,8 @@
           </div>
           
           <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
-            <button class="btn" id="tmLoadBtn" onclick="loadTeachableModel()" style="flex: 1;">🚀 Load Model & Kamera</button>
-            <button class="btn btn-danger" id="tmStopBtn" onclick="stopTeachableModel()" style="display: none;">⏹ Stop</button>
+            <button class="btn" id="tmLoadBtn" onclick="loadTeachableModel()" style="flex: 1;"><svg class="ic"><use href="#i-play"/></svg> Load Model & Kamera</button>
+            <button class="btn btn-danger" id="tmStopBtn" onclick="stopTeachableModel()" style="display: none;"><svg class="ic"><use href="#i-stop"/></svg> Stop</button>
           </div>
 
           <div class="tm-webcam-container" id="tmWebcamContainer">
@@ -702,6 +850,81 @@
           </div>
 
           <div id="tmPredictionList" class="tm-prediction-list"></div>
+        </div>
+      </div>
+
+      <!-- PAGE: SMART PARKING -->
+      <div id="parking" class="page">
+        <h2 style="margin-bottom: 1rem;"><svg class="ic"><use href="#i-parking"/></svg> Smart Parking</h2>
+        <div class="widget-grid" style="margin-bottom: 1.5rem;">
+          <div class="widget-card"><h3>Slot Kosong</h3><div id="parkFree" class="sensor-value" style="color: var(--success);">0</div></div>
+          <div class="widget-card"><h3>Slot Terisi</h3><div id="parkBusy" class="sensor-value" style="color: var(--danger);">0</div></div>
+          <div class="widget-card"><h3>Okupansi</h3><div id="parkPct" class="sensor-value">0%</div><div class="occ-bar"><div id="parkBar" class="occ-fill"></div></div></div>
+          <div class="widget-card"><h3>Pendapatan Hari Ini</h3><div id="parkRevenue" class="sensor-value" style="color: var(--warning);">Rp 0</div></div>
+        </div>
+
+        <div class="widget-card" style="margin-bottom: 1.5rem;">
+          <div id="parkFullBanner" class="park-full-banner">PARKIRAN PENUH</div>
+          <div class="widget-header"><h3>Denah Slot</h3><span id="parkFullBadge" style="font-weight: bold; color: var(--danger);"></span></div>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Sensor mengirim <code>masuk1:1</code> (terisi) atau <code>masuk1:0</code> (kosong). Klik slot untuk simulasi manual. Jumlah slot diatur di menu Widget Builder.</p>
+          <div id="parkGrid" class="park-grid"></div>
+        </div>
+
+        <div class="widget-grid">
+          <div class="widget-card">
+            <h3>Grafik Slot Terisi</h3>
+            <div style="height: 180px;"><canvas id="parkChart"></canvas></div>
+          </div>
+        <div class="widget-card">
+          <h3><svg class="ic"><use href="#i-gate"/></svg> Gerbang Parkir AI</h3>
+          <div style="background: var(--bg-dark); padding: 12px; border-radius: 6px;">
+            <div id="gtStatus" style="font-size: 1.3rem; font-weight: bold;">Status Gerbang: -</div>
+            <small id="gtLastSent" style="color: var(--text-muted);">Perintah terakhir: -</small>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold;">Kirim Otomatis ke Micro:bit:</span>
+            <label class="switch"><input type="checkbox" id="gtAuto" checked onchange="gtSaveCfg()"><span class="slider-toggle"></span></label>
+          </div>
+
+          <div class="form-group">
+            <label>Link Model Teachable Machine:</label>
+            <input type="text" id="gtUrl" class="form-control" placeholder="https://teachablemachine.withgoogle.com/models/xxxxx/" onchange="gtSaveCfg()">
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;"><label>Nama kelas Buka:</label><input type="text" id="gtOpenLabel" class="form-control" onchange="gtSaveCfg()"></div>
+            <div class="form-group" style="flex: 1;"><label>Nama kelas Tutup:</label><input type="text" id="gtCloseLabel" class="form-control" onchange="gtSaveCfg()"></div>
+          </div>
+          <div class="form-group">
+            <label>Batas Akurasi Kirim: <span id="gtThreshVal">85</span>%</label>
+            <input type="range" min="50" max="99" value="85" id="gtThresh" oninput="document.getElementById('gtThreshVal').innerText=this.value; gtSaveCfg()">
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="gtLoad()" style="flex: 1;"><svg class="ic"><use href="#i-play"/></svg> Load Model & Kamera</button>
+            <button class="btn btn-danger" id="gtStopBtn" onclick="gtStop()" style="display: none;"><svg class="ic"><use href="#i-stop"/></svg> Stop</button>
+          </div>
+
+          <div class="tm-webcam-container" id="gtWebcamContainer">
+            <div class="tm-placeholder">Masukkan link model lalu tekan Load Model & Kamera</div>
+          </div>
+          <div id="gtPredictionList" class="tm-prediction-list"></div>
+
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-success" style="flex: 1;" onclick="gtManual('buka_gerbang')">Buka Manual</button>
+            <button class="btn btn-danger" style="flex: 1;" onclick="gtManual('tutup_gerbang')">Tutup Manual</button>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Nama kelas di model harus sama dengan nama kelas di atas. Perintah BLE: <code>buka_gerbang</code> dan <code>tutup_gerbang</code>. Perintah dikirim hanya saat status berubah, setelah terdeteksi stabil beberapa frame di atas batas akurasi.</p>
+        </div>
+          <div class="widget-card">
+            <div class="widget-header"><h3>Riwayat Kendaraan Keluar</h3>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-purple btn-sm" onclick="parkExportCSV()"><svg class="ic"><use href="#i-download"/></svg> CSV</button>
+                <button class="btn btn-danger btn-sm" title="Hapus riwayat" onclick="parkClearHistory()"><svg class="ic"><use href="#i-trash"/></svg></button>
+              </div>
+            </div>
+            <div id="parkHistory"><p style="color: var(--text-muted);">Belum ada data.</p></div>
+          </div>
         </div>
       </div>
 
@@ -724,8 +947,8 @@
 
           <h4 style="border-top: 1px solid var(--border-color); padding-top: 1rem;">Export / Import JSON Data</h4>
           <div style="display: flex; gap: 10px; margin-top: 0.5rem;">
-            <button class="btn btn-purple" onclick="exportDataJSON()" style="flex:1;">📥 Export JSON</button>
-            <button class="btn btn-warning" onclick="document.getElementById('importFileInput').click()" style="flex:1;">📤 Import JSON</button>
+            <button class="btn btn-purple" onclick="exportDataJSON()" style="flex:1;"><svg class="ic"><use href="#i-download"/></svg> Export JSON</button>
+            <button class="btn btn-warning" onclick="document.getElementById('importFileInput').click()" style="flex:1;"><svg class="ic"><use href="#i-upload"/></svg> Import JSON</button>
             <input type="file" id="importFileInput" style="display:none;" onchange="importDataJSON(event)" accept=".json">
           </div>
         </div>
@@ -733,7 +956,7 @@
 
     </div>
 
-    <!-- ACTIVITY LOG PANEL (LAPTOP / TABLET) -->
+    <!-- ACTIVITY LOG PANEL -->
     <div class="activity-panel">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3>System Activity</h3>
@@ -742,34 +965,6 @@
       <div id="activityLogs" class="activity-logs">
         <div class="log-card log-info">System siap digunakan</div>
       </div>
-    </div>
-
-    <!-- BOTTOM NAV BAR (TAMPILAN KHUSUS HP) -->
-    <div class="mobile-bottom-nav">
-      <button class="mobile-nav-item active" onclick="switchPage('dashboard')">
-        <span class="icon">📊</span>
-        <span>Dashboard</span>
-      </button>
-      <button class="mobile-nav-item" onclick="switchPage('builder')">
-        <span class="icon">🛠️</span>
-        <span>Builder</span>
-      </button>
-      <button class="mobile-nav-item" onclick="switchPage('controller')">
-        <span class="icon">🎮</span>
-        <span>Control</span>
-      </button>
-      <button class="mobile-nav-item" onclick="switchPage('teachable')">
-        <span class="icon">🤖</span>
-        <span>AI Cam</span>
-      </button>
-      <button class="mobile-nav-item" id="mobileSettingBtn" onclick="switchPage('setting')">
-        <span class="icon">⚙️</span>
-        <span>Setting</span>
-      </button>
-      <button class="mobile-nav-item" onclick="lockWebsite()">
-        <span class="icon">🔒</span>
-        <span>Kunci</span>
-      </button>
     </div>
 
   </div>
@@ -785,7 +980,9 @@
       userUserName: "user biasa",
       userUserImg: "Membawa Sajam.jpg",
       theme: "dark",
-      widgets: []
+      widgets: [],
+      hiddenCards: [],
+      parking: { slots: 3 }
     };
 
     let currentUserRole = "";
@@ -802,6 +999,7 @@
       document.getElementById('settingWebTitle').value = appConfig.webTitle;
       changeTheme(appConfig.theme);
       renderSavedWidgets();
+      applyDashCards();
     }
 
     function saveAppData() {
@@ -889,18 +1087,14 @@
     function applyRolePermissions() {
       const badge = document.getElementById('userRoleBadge');
       const settingNav = document.getElementById('navSettingBtn');
-      const mobileSettingBtn = document.getElementById('mobileSettingBtn');
-
       if (currentUserRole === "dev") {
         badge.innerText = "Developer";
         badge.className = "role-badge role-dev";
-        if (settingNav) settingNav.style.display = "block";
-        if (mobileSettingBtn) mobileSettingBtn.style.display = "flex";
+        settingNav.style.display = "block";
       } else {
         badge.innerText = "User";
         badge.className = "role-badge role-user";
-        if (settingNav) settingNav.style.display = "none";
-        if (mobileSettingBtn) mobileSettingBtn.style.display = "none";
+        settingNav.style.display = "none";
         switchPage('dashboard');
       }
     }
@@ -910,41 +1104,26 @@
         alert("Akses Ditolak!");
         return;
       }
-
-      // Hide all pages
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-
-      // Deactivate desktop nav
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-
-      // Deactivate mobile nav
-      document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
-
       const target = document.getElementById(pageId);
       if (target) target.classList.add('active');
-
-      // Sync active state for desktop sidebar
-      const activeNavBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick')?.includes(`'${pageId}'`));
-      if (activeNavBtn) activeNavBtn.classList.add('active');
-
-      // Sync active state for mobile bottom nav
-      const activeMobileNav = Array.from(document.querySelectorAll('.mobile-nav-item')).find(b => b.getAttribute('onclick')?.includes(`'${pageId}'`));
-      if (activeMobileNav) activeMobileNav.classList.add('active');
+      const navBtn = document.querySelector(`.nav-btn[onclick*="'${pageId}'"]`);
+      if (navBtn) navBtn.classList.add('active');
     }
 
     function addLog(msg, type="info") {
       const container = document.getElementById('activityLogs');
-      if (!container) return;
       const card = document.createElement('div');
       card.className = `log-card log-${type}`;
-      card.innerText = msg;
+      card.innerText = `[${new Date().toLocaleTimeString('id-ID')}] ${msg}`;
       container.appendChild(card);
+      while (container.children.length > 100) container.removeChild(container.firstChild);
       container.scrollTop = container.scrollHeight;
     }
 
     function clearLogs() {
-      const el = document.getElementById('activityLogs');
-      if (el) el.innerHTML = '<div class="log-card log-info">Log dibersihkan</div>';
+      document.getElementById('activityLogs').innerHTML = '<div class="log-card log-info">Log dibersihkan</div>';
     }
 
     function changeTheme(theme) {
@@ -984,6 +1163,7 @@
         });
 
         bleDevice.addEventListener('gattserverdisconnected', () => {
+          rxCharacteristic = null; txCharacteristic = null;
           statusText.innerText = "Status: Terputus";
           statusText.style.color = "var(--danger)";
           connectBtn.innerText = "Hubungkan Bluetooth";
@@ -1013,6 +1193,7 @@
     function handleIncomingData(event) {
       const str = new TextDecoder().decode(event.target.value).trim();
       addLog(`Data Masuk: ${str}`, "info");
+      if (parkingHandleData(str)) return;
       const num = parseFloat(str.replace(/[^0-9.]/g, ''));
       if (!isNaN(num)) addChartData(num);
 
@@ -1071,6 +1252,7 @@
     // TEACHABLE MACHINE INTEGRATION
     let tmModel = null, tmWebcam = null, tmIsRunning = false, tmLastSentClass = null;
     async function loadTeachableModel() {
+      if (typeof gtRunning !== 'undefined' && gtRunning) gtStop();
       let url = document.getElementById('tmModelUrl').value.trim();
       if (!url) return alert("Masukkan URL Model terlebih dahulu!");
       if (url.endsWith('/')) url = url.slice(0, -1);
@@ -1124,6 +1306,19 @@
       const stopThresh = parseInt(document.getElementById('stopThreshRange').value) / 100;
       const autoSend = document.getElementById('tmAutoSendToggle').checked;
 
+      const tmList = document.getElementById('tmPredictionList');
+      tmList.innerHTML = '';
+      prediction.forEach((p, i) => {
+        const row = document.createElement('div');
+        row.className = 'tm-pred-item' + (i === bestIdx ? ' active' : '');
+        const n = document.createElement('span'); n.innerText = p.className;
+        const v = document.createElement('span');
+        v.className = 'tm-confidence' + (p.probability >= sendThresh ? ' high' : '');
+        v.innerText = Math.round(p.probability * 100) + '%';
+        row.append(n, v);
+        tmList.appendChild(row);
+      });
+
       const bestClass = prediction[bestIdx].className;
       if (autoSend) {
         if (bestProb >= sendThresh) {
@@ -1153,7 +1348,7 @@
       const reader = new FileReader();
       reader.onload = (evt) => {
         try {
-          appConfig = JSON.parse(evt.target.result);
+          appConfig = { ...appConfig, ...JSON.parse(evt.target.result) };
           saveAppData();
           location.reload();
         } catch(err) {
@@ -1184,26 +1379,30 @@
         if (w.category === "input") {
           card.innerHTML = `
             <div class="widget-header">
-              <h3>${w.name} (Input)</h3>
-              <button class="btn btn-danger btn-sm" onclick="removeWidget('${w.key}')">🗑️</button>
+              <h3>${esc(w.name)} (Input)</h3>
+              <button class="btn btn-danger btn-sm" data-rm><svg class="ic"><use href="#i-trash"/></svg></button>
             </div>
-            <div id="widget_val_${w.key}" class="sensor-value">--</div>
+            <div id="widget_val_${esc(w.key)}" class="sensor-value">--</div>
           `;
         } else {
           card.innerHTML = `
             <div class="widget-header">
-              <h3>${w.name} (Output)</h3>
-              <button class="btn btn-danger btn-sm" onclick="removeWidget('${w.key}')">🗑️</button>
+              <h3>${esc(w.name)} (Output)</h3>
+              <button class="btn btn-danger btn-sm" data-rm><svg class="ic"><use href="#i-trash"/></svg></button>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
-              <button class="btn" onclick="sendBLEData('${w.key},1')">Send 1</button>
-              <button class="btn btn-danger" onclick="sendBLEData('${w.key},0')">Send 0</button>
+              <button class="btn" data-send="1">Send 1</button>
+              <button class="btn btn-danger" data-send="0">Send 0</button>
             </div>
           `;
         }
+        card.querySelector('[data-rm]').onclick = () => removeWidget(w.key);
+        card.querySelectorAll('[data-send]').forEach(b => b.onclick = () => sendBLEData(`${w.key},${b.dataset.send}`));
         grid.appendChild(card);
       });
     }
+
+    function esc(t) { return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
     function removeWidget(key) {
       appConfig.widgets = appConfig.widgets.filter(w => w.key !== key);
@@ -1211,11 +1410,378 @@
       renderSavedWidgets();
     }
 
+    // GERBANG AI (TEACHABLE MACHINE)
+    const GT_STABLE_FRAMES = 5;
+    let gtModel = null, gtWebcam = null, gtRunning = false, gtLastSent = null, gtCand = null, gtCount = 0;
+
+    function gtCfg() {
+      appConfig.gate = { url: '', open: 'Buka', close: 'Tutup', thresh: 85, auto: true, ...(appConfig.gate || {}) };
+      return appConfig.gate;
+    }
+
+    function gtInit() {
+      const c = gtCfg();
+      document.getElementById('gtUrl').value = c.url;
+      document.getElementById('gtOpenLabel').value = c.open;
+      document.getElementById('gtCloseLabel').value = c.close;
+      document.getElementById('gtThresh').value = c.thresh;
+      document.getElementById('gtThreshVal').innerText = c.thresh;
+      document.getElementById('gtAuto').checked = c.auto;
+    }
+
+    function gtSaveCfg() {
+      const c = gtCfg();
+      c.url = document.getElementById('gtUrl').value.trim();
+      c.open = document.getElementById('gtOpenLabel').value.trim() || 'Buka';
+      c.close = document.getElementById('gtCloseLabel').value.trim() || 'Tutup';
+      c.thresh = parseInt(document.getElementById('gtThresh').value);
+      c.auto = document.getElementById('gtAuto').checked;
+      saveAppData();
+    }
+
+    function gtShowSent(cmd) {
+      document.getElementById('gtLastSent').innerText = 'Perintah terakhir: ' + (cmd || '-');
+    }
+
+    function gtManual(cmd) {
+      gtLastSent = cmd;
+      gtCand = null; gtCount = 0;
+      sendBLEData(cmd);
+      gtShowSent(cmd);
+    }
+
+    async function gtLoad() {
+      let url = document.getElementById('gtUrl').value.trim().replace(/\/?(model|metadata)\.json$/, '').replace(/\/$/, '');
+      if (!url) return alert("Masukkan URL Model terlebih dahulu!");
+      if (typeof tmImage === 'undefined') return alert("Library Teachable Machine belum termuat. Cek koneksi internet.");
+      gtSaveCfg();
+      if (tmIsRunning) stopTeachableModel();
+      if (gtRunning) gtStop();
+      try {
+        gtModel = await tmImage.load(url + "/model.json", url + "/metadata.json");
+        gtWebcam = new tmImage.Webcam(400, 300, true);
+        await gtWebcam.setup();
+        await gtWebcam.play();
+        const box = document.getElementById('gtWebcamContainer');
+        box.innerHTML = '';
+        box.appendChild(gtWebcam.canvas);
+        document.getElementById('gtStopBtn').style.display = 'inline-flex';
+        gtRunning = true; gtLastSent = null; gtCand = null; gtCount = 0;
+        addLog("Model Gerbang AI berhasil dimuat", "success");
+        window.requestAnimationFrame(gtLoop);
+      } catch (err) {
+        addLog(`Gagal memuat model gerbang: ${err.message}`, "error");
+        alert("Gagal memuat model atau kamera!");
+      }
+    }
+
+    function gtStop() {
+      gtRunning = false;
+      if (gtWebcam) { gtWebcam.stop(); gtWebcam = null; }
+      gtLastSent = null; gtCand = null; gtCount = 0;
+      document.getElementById('gtWebcamContainer').innerHTML = '<div class="tm-placeholder">Kamera Dihentikan</div>';
+      document.getElementById('gtStopBtn').style.display = 'none';
+      document.getElementById('gtPredictionList').innerHTML = '';
+      document.getElementById('gtStatus').innerText = 'Status Gerbang: -';
+      document.getElementById('gtStatus').style.color = '';
+      addLog("Kamera Gerbang AI dihentikan", "warning");
+    }
+
+    async function gtLoop() {
+      if (!gtRunning || !gtWebcam) return;
+      gtWebcam.update();
+      await gtPredict();
+      window.requestAnimationFrame(gtLoop);
+    }
+
+    async function gtPredict() {
+      if (!gtModel || !gtWebcam) return;
+      const pred = await gtModel.predict(gtWebcam.canvas);
+      if (!gtRunning) return;
+      let best = pred[0];
+      pred.forEach(p => { if (p.probability > best.probability) best = p; });
+
+      const c = gtCfg(), thresh = c.thresh / 100, name = best.className.trim().toLowerCase();
+      const cmd = name === c.open.toLowerCase() ? 'buka_gerbang' : (name === c.close.toLowerCase() ? 'tutup_gerbang' : null);
+      const sure = cmd && best.probability >= thresh;
+      gtRender(pred, best, cmd, sure);
+
+      if (!c.auto) return;
+      if (sure) {
+        if (cmd !== gtLastSent) {
+          gtCount = (cmd === gtCand) ? gtCount + 1 : 1;
+          gtCand = cmd;
+          if (gtCount >= GT_STABLE_FRAMES) {
+            gtLastSent = cmd; gtCand = null; gtCount = 0;
+            sendBLEData(cmd);
+            gtShowSent(cmd);
+          }
+        }
+      } else {
+        gtCand = null; gtCount = 0;
+      }
+    }
+
+    function gtRender(pred, best, cmd, sure) {
+      const pct = Math.round(best.probability * 100);
+      const st = document.getElementById('gtStatus');
+      if (sure) {
+        st.innerText = `Status Gerbang: ${cmd === 'buka_gerbang' ? 'Buka' : 'Tutup'} (${pct}%)`;
+        st.style.color = cmd === 'buka_gerbang' ? 'var(--success)' : 'var(--danger)';
+      } else {
+        st.innerText = `Status Gerbang: Menunggu (${best.className} ${pct}%)`;
+        st.style.color = 'var(--text-muted)';
+      }
+      const list = document.getElementById('gtPredictionList');
+      list.innerHTML = '';
+      pred.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'tm-pred-item' + (p === best ? ' active' : '');
+        const n = document.createElement('span'); n.innerText = p.className;
+        const v = document.createElement('span');
+        v.className = 'tm-confidence' + (p.probability >= 0.85 ? ' high' : '');
+        v.innerText = Math.round(p.probability * 100) + '%';
+        row.append(n, v);
+        list.appendChild(row);
+      });
+    }
+
+    // DASHBOARD CARD VISIBILITY
+    const DASH_CARDS = ['dashChartCard', 'dashParkCard'];
+    function hideDashCard(id) {
+      if (!Array.isArray(appConfig.hiddenCards)) appConfig.hiddenCards = [];
+      if (!appConfig.hiddenCards.includes(id)) appConfig.hiddenCards.push(id);
+      saveAppData();
+      applyDashCards();
+      addLog("Kartu dashboard disembunyikan", "warning");
+    }
+    function restoreDashCards() {
+      appConfig.hiddenCards = [];
+      saveAppData();
+      applyDashCards();
+      addLog("Kartu dashboard dipulihkan", "success");
+    }
+    function applyDashCards() {
+      const hidden = Array.isArray(appConfig.hiddenCards) ? appConfig.hiddenCards : [];
+      DASH_CARDS.forEach(id => { document.getElementById(id).style.display = hidden.includes(id) ? 'none' : ''; });
+      const btn = document.getElementById('dashRestoreBtn');
+      btn.style.display = hidden.length ? 'inline-flex' : 'none';
+      btn.innerHTML = `<svg class="ic"><use href="#i-undo"/></svg> Pulihkan Kartu (${hidden.length})`;
+    }
+
+    // SMART PARKING
+    let parkSlots = [], parkHistory = [], parkTimer = null, parkChart = null, parkWasFull = false;
+    const PARK_HIST_KEY = 'bt_park_history';
+
+    function parkLoadHistory() {
+      try { const h = JSON.parse(localStorage.getItem(PARK_HIST_KEY) || '[]'); return Array.isArray(h) ? h : []; } catch (e) { return []; }
+    }
+    function parkSaveHistory() {
+      try { localStorage.setItem(PARK_HIST_KEY, JSON.stringify(parkHistory)); } catch (e) {}
+    }
+    function parkRate() { return Number(appConfig.parking && appConfig.parking.rate) || 0; }
+    function parkCost(ms) { return Math.max(1, Math.ceil(ms / 3600000)) * parkRate(); }
+    function rupiah(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+
+    function parkBeep() {
+      try {
+        const a = new (window.AudioContext || window.webkitAudioContext)();
+        const o = a.createOscillator(), g = a.createGain();
+        o.connect(g); g.connect(a.destination);
+        o.frequency.value = 880; g.gain.value = 0.05;
+        o.start(); o.stop(a.currentTime + 0.25);
+      } catch (e) {}
+    }
+
+    function parkExportCSV() {
+      if (!parkHistory.length) return alert('Belum ada riwayat untuk diekspor.');
+      const rows = [['Waktu Keluar', 'Slot', 'Durasi (detik)', 'Biaya (Rp)']]
+        .concat(parkHistory.map(r => [new Date(r.t).toLocaleString('id-ID'), r.slot, Math.round(r.dur / 1000), r.cost || 0]));
+      const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+      a.download = 'riwayat_parkir.csv';
+      a.click();
+      addLog('Riwayat parkir diekspor ke CSV', 'success');
+    }
+
+    function parkClearHistory() {
+      if (!parkHistory.length || !confirm('Hapus semua riwayat parkir?')) return;
+      parkHistory = []; parkSaveHistory(); renderParking();
+      addLog('Riwayat parkir dihapus', 'warning');
+    }
+
+    function parkingInit() {
+      const cfg = { slots: 3, rate: 3000, ...(appConfig.parking || {}) };
+      appConfig.parking = cfg;
+      document.getElementById('parkSlotCount').value = cfg.slots;
+      document.getElementById('parkRate').value = cfg.rate;
+      parkSlots = Array.from({ length: cfg.slots }, () => ({ busy: false, since: null }));
+      parkHistory = parkLoadHistory(); parkWasFull = false;
+      parkChartInit();
+      renderParking();
+      clearInterval(parkTimer);
+      parkTimer = setInterval(renderParking, 1000);
+    }
+
+    function parkingSave() {
+      const n = Math.min(12, Math.max(1, parseInt(document.getElementById('parkSlotCount').value) || 3));
+      const rate = Math.max(0, parseInt(document.getElementById('parkRate').value) || 0);
+      appConfig.parking = { slots: n, rate };
+      saveAppData();
+      parkingInit();
+      addLog(`Smart Parking: ${n} slot, tarif ${rupiah(rate)}/jam`, "success");
+      alert(`Disimpan: ${n} slot, tarif ${rupiah(rate)}/jam`);
+    }
+
+    // Terima data "slotN:1/0"; return true jika data milik Smart Parking
+    function parkingHandleData(str) {
+      let handled = false;
+      str.split(/[\r\n]+/).forEach(line => {
+        const m = line.trim().match(/^(?:masuk|slot)(\d+)\s*:\s*([01])$/i);
+        if (m) { parkingSet(parseInt(m[1]) - 1, m[2] === '1', 'sensor'); handled = true; }
+      });
+      return handled;
+    }
+
+    function parkingSet(i, busy, src) {
+      const slot = parkSlots[i];
+      if (!slot || slot.busy === busy) return;
+      slot.busy = busy;
+      if (busy) {
+        slot.since = Date.now();
+        addLog(`Slot ${i + 1} terisi (${src})`, "info");
+      } else {
+        const ms = Date.now() - slot.since;
+        const cost = parkCost(ms);
+        parkHistory.unshift({ slot: i + 1, dur: ms, cost, t: Date.now() });
+        parkHistory = parkHistory.slice(0, 200);
+        parkSaveHistory();
+        slot.since = null;
+        addLog(`Slot ${i + 1} kosong (${src}) - parkir ${parkFmt(ms)}, biaya ${rupiah(cost)}`, "success");
+      }
+      parkChartPush();
+      renderParking();
+    }
+
+    function parkChartInit() {
+      const c = document.getElementById('parkChart');
+      if (!c || typeof Chart === 'undefined') return;
+      if (!parkChart) {
+        parkChart = new Chart(c.getContext('2d'), {
+          type: 'line',
+          data: { labels: [], datasets: [{ label: 'Slot Terisi', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, stepped: true }] },
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+      }
+      parkChart.options.scales.y.suggestedMax = parkSlots.length;
+      parkChart.data.labels = []; parkChart.data.datasets[0].data = [];
+      parkChartPush();
+    }
+
+    function parkChartPush() {
+      if (!parkChart) return;
+      parkChart.data.labels.push(new Date().toLocaleTimeString('id-ID'));
+      parkChart.data.datasets[0].data.push(parkSlots.filter(x => x.busy).length);
+      if (parkChart.data.labels.length > 30) { parkChart.data.labels.shift(); parkChart.data.datasets[0].data.shift(); }
+      parkChart.update();
+    }
+
+    function parkFmt(ms) {
+      const t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+      return `${h ? h + 'j ' : ''}${m}m ${s}d`;
+    }
+
+    const PARK_CAR_COLORS = ['#3b82f6', '#f59e0b', '#22d3ee', '#e5e7eb', '#fb7185'];
+    const PARK_CAR_SVG = `<svg class="pk-car" viewBox="0 0 60 110" aria-hidden="true">
+      <rect class="car-tire" x="3" y="18" width="7" height="20" rx="3"/><rect class="car-tire" x="50" y="18" width="7" height="20" rx="3"/>
+      <rect class="car-tire" x="3" y="70" width="7" height="20" rx="3"/><rect class="car-tire" x="50" y="70" width="7" height="20" rx="3"/>
+      <rect class="car-body" x="2" y="38" width="7" height="5" rx="2"/><rect class="car-body" x="51" y="38" width="7" height="5" rx="2"/>
+      <rect class="car-body" x="7" y="3" width="46" height="104" rx="19"/>
+      <path class="car-win" d="M15 36 Q30 27 45 36 L43 50 H17 Z"/>
+      <rect class="car-roof" x="16" y="52" width="28" height="24" rx="7"/>
+      <path class="car-win" d="M17 80 H43 L45 90 Q30 96 15 90 Z"/>
+      <rect class="car-lf" x="12" y="7" width="10" height="5" rx="2.5"/><rect class="car-lf" x="38" y="7" width="10" height="5" rx="2.5"/>
+      <rect class="car-lr" x="12" y="100" width="10" height="3" rx="1.5"/><rect class="car-lr" x="38" y="100" width="10" height="3" rx="1.5"/>
+    </svg>`;
+
+    function parkBuildGrid(grid, clickable) {
+      grid.innerHTML = '';
+      parkSlots.forEach((_, i) => {
+        const d = document.createElement('div');
+        d.className = 'park-slot';
+        d.style.setProperty('--car', PARK_CAR_COLORS[i % PARK_CAR_COLORS.length]);
+        d.innerHTML = `<div class="pk-bay"><span class="pk-p">P</span>${PARK_CAR_SVG}</div><b>Slot ${i + 1}</b><span class="pk-state">Kosong</span><small class="pk-time"></small>`;
+        if (clickable) d.onclick = () => parkingSet(i, !parkSlots[i].busy, 'manual'); else d.style.cursor = 'default';
+        grid.appendChild(d);
+      });
+    }
+
+    function renderParking() {
+      if (!document.getElementById('parkGrid')) return;
+      const busy = parkSlots.filter(s => s.busy).length;
+      [['parkGrid', true], ['parkDashGrid', false]].forEach(([id, clickable]) => {
+        const grid = document.getElementById(id);
+        if (grid.children.length !== parkSlots.length) parkBuildGrid(grid, clickable);
+        parkSlots.forEach((sl, i) => {
+          const el = grid.children[i];
+          el.classList.toggle('busy', sl.busy);
+          el.querySelector('.pk-state').innerText = sl.busy ? 'Terisi' : 'Kosong';
+          el.querySelector('.pk-time').innerText = sl.busy ? `${parkFmt(Date.now() - sl.since)} · ${rupiah(parkCost(Date.now() - sl.since))}` : '';
+        });
+      });
+      const sum = document.getElementById('parkDashSummary');
+      const pct = parkSlots.length ? Math.round(busy / parkSlots.length * 100) : 0;
+      sum.innerText = `${busy}/${parkSlots.length} terisi (${pct}%)`;
+      sum.style.color = busy === parkSlots.length ? 'var(--danger)' : 'var(--success)';
+      document.getElementById('parkFree').innerText = parkSlots.length - busy;
+      document.getElementById('parkBusy').innerText = busy;
+      const full = parkSlots.length > 0 && busy === parkSlots.length;
+      document.getElementById('parkFullBadge').innerText = full ? 'PENUH' : '';
+      document.getElementById('parkFullBanner').classList.toggle('show', full);
+      if (full && !parkWasFull) { addLog('Parkiran PENUH!', 'warning'); parkBeep(); }
+      parkWasFull = full;
+      document.getElementById('parkPct').innerText = pct + '%';
+      const bar = document.getElementById('parkBar');
+      bar.style.width = pct + '%';
+      bar.style.background = pct >= 100 ? 'var(--danger)' : pct >= 67 ? 'var(--warning)' : 'var(--success)';
+      const today = new Date().toDateString();
+      document.getElementById('parkRevenue').innerText = rupiah(parkHistory.filter(r => new Date(r.t).toDateString() === today).reduce((a, r) => a + (r.cost || 0), 0));
+      const h = document.getElementById('parkHistory');
+      h.innerHTML = parkHistory.length ? '' : '<p style="color: var(--text-muted);">Belum ada data.</p>';
+      parkHistory.slice(0, 10).forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'park-row';
+        row.innerHTML = `<span>Slot ${r.slot} <small style="color:var(--text-muted)">${new Date(r.t || Date.now()).toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'})}</small></span><b>${parkFmt(r.dur)} · ${rupiah(r.cost || 0)}</b>`;
+        h.appendChild(row);
+      });
+    }
+
     // INITIAL STARTUP
     window.onload = () => {
       loadSavedData();
       initChart();
+      parkingInit();
+      gtInit();
     };
+  </script>
+
+  <script>
+    // Efek 3D layar password: kartu miring mengikuti kursor (visual saja)
+    (function () {
+      const ls = document.getElementById('lock-screen'), card = ls && ls.querySelector('.lock-card');
+      if (!card || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      ls.addEventListener('mousemove', (e) => {
+        const r = card.getBoundingClientRect();
+        const nx = (e.clientX - (r.left + r.width / 2)) / (window.innerWidth / 2);
+        const ny = (e.clientY - (r.top + r.height / 2)) / (window.innerHeight / 2);
+        card.style.setProperty('--ry', Math.max(-1, Math.min(1, nx)) * 12 + 'deg');
+        card.style.setProperty('--rx', Math.max(-1, Math.min(1, ny)) * -10 + 'deg');
+        card.style.setProperty('--mx', Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100)) + '%');
+        card.style.setProperty('--my', Math.max(0, Math.min(100, (e.clientY - r.top) / r.height * 100)) + '%');
+      });
+      ls.addEventListener('mouseleave', () => { card.style.setProperty('--rx', '0deg'); card.style.setProperty('--ry', '0deg'); });
+    })();
   </script>
 </body>
 </html>
