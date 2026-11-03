@@ -721,10 +721,6 @@
             <label>Jumlah Slot Parkir (1-12):</label>
             <input type="number" id="parkSlotCount" class="form-control" min="1" max="12">
           </div>
-          <div class="form-group">
-            <label>Tarif Parkir per Jam (Rp):</label>
-            <input type="number" id="parkRate" class="form-control" min="0" step="500">
-          </div>
           <p style="color: var(--text-muted); font-size: 0.85rem;">Micro:bit mengirim <code>masuk1:1</code> (terisi) atau <code>masuk1:0</code> (kosong), dst. sesuai nomor slot.</p>
           <button class="btn" onclick="parkingSave()">Simpan Jumlah Slot</button>
         </div>
@@ -860,7 +856,6 @@
           <div class="widget-card"><h3>Slot Kosong</h3><div id="parkFree" class="sensor-value" style="color: var(--success);">0</div></div>
           <div class="widget-card"><h3>Slot Terisi</h3><div id="parkBusy" class="sensor-value" style="color: var(--danger);">0</div></div>
           <div class="widget-card"><h3>Okupansi</h3><div id="parkPct" class="sensor-value">0%</div><div class="occ-bar"><div id="parkBar" class="occ-fill"></div></div></div>
-          <div class="widget-card"><h3>Pendapatan Hari Ini</h3><div id="parkRevenue" class="sensor-value" style="color: var(--warning);">Rp 0</div></div>
         </div>
 
         <div class="widget-card" style="margin-bottom: 1.5rem;">
@@ -909,22 +904,8 @@
             <div class="tm-placeholder">Masukkan link model lalu tekan Load Model & Kamera</div>
           </div>
           <div id="gtPredictionList" class="tm-prediction-list"></div>
-
-          <div style="display: flex; gap: 10px;">
-            <button class="btn btn-success" style="flex: 1;" onclick="gtManual('buka_gerbang')">Buka Manual</button>
-            <button class="btn btn-danger" style="flex: 1;" onclick="gtManual('tutup_gerbang')">Tutup Manual</button>
-          </div>
-          <p style="color: var(--text-muted); font-size: 0.85rem;">Nama kelas di model harus sama dengan nama kelas di atas. Perintah BLE: <code>buka_gerbang</code> dan <code>tutup_gerbang</code>. Perintah dikirim hanya saat status berubah, setelah terdeteksi stabil beberapa frame di atas batas akurasi.</p>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Nama kelas di model harus sama dengan nama kelas di atas. Gerbang sepenuhnya dikendalikan kamera. Perintah BLE: <code>buka_gerbang</code> dan <code>tutup_gerbang</code>. Perintah dikirim hanya saat status berubah, setelah terdeteksi stabil beberapa frame di atas batas akurasi.</p>
         </div>
-          <div class="widget-card">
-            <div class="widget-header"><h3>Riwayat Kendaraan Keluar</h3>
-              <div style="display:flex;gap:6px;">
-                <button class="btn btn-purple btn-sm" onclick="parkExportCSV()"><svg class="ic"><use href="#i-download"/></svg> CSV</button>
-                <button class="btn btn-danger btn-sm" title="Hapus riwayat" onclick="parkClearHistory()"><svg class="ic"><use href="#i-trash"/></svg></button>
-              </div>
-            </div>
-            <div id="parkHistory"><p style="color: var(--text-muted);">Belum ada data.</p></div>
-          </div>
         </div>
       </div>
 
@@ -1443,12 +1424,6 @@
       document.getElementById('gtLastSent').innerText = 'Perintah terakhir: ' + (cmd || '-');
     }
 
-    function gtManual(cmd) {
-      gtLastSent = cmd;
-      gtCand = null; gtCount = 0;
-      sendBLEData(cmd);
-      gtShowSent(cmd);
-    }
 
     async function gtLoad() {
       let url = document.getElementById('gtUrl').value.trim().replace(/\/?(model|metadata)\.json$/, '').replace(/\/$/, '');
@@ -1570,18 +1545,8 @@
     }
 
     // SMART PARKING
-    let parkSlots = [], parkHistory = [], parkTimer = null, parkChart = null, parkWasFull = false;
-    const PARK_HIST_KEY = 'bt_park_history';
+    let parkSlots = [], parkTimer = null, parkChart = null, parkWasFull = false;
 
-    function parkLoadHistory() {
-      try { const h = JSON.parse(localStorage.getItem(PARK_HIST_KEY) || '[]'); return Array.isArray(h) ? h : []; } catch (e) { return []; }
-    }
-    function parkSaveHistory() {
-      try { localStorage.setItem(PARK_HIST_KEY, JSON.stringify(parkHistory)); } catch (e) {}
-    }
-    function parkRate() { return Number(appConfig.parking && appConfig.parking.rate) || 0; }
-    function parkCost(ms) { return Math.max(1, Math.ceil(ms / 3600000)) * parkRate(); }
-    function rupiah(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
 
     function parkBeep() {
       try {
@@ -1593,31 +1558,15 @@
       } catch (e) {}
     }
 
-    function parkExportCSV() {
-      if (!parkHistory.length) return alert('Belum ada riwayat untuk diekspor.');
-      const rows = [['Waktu Keluar', 'Slot', 'Durasi (detik)', 'Biaya (Rp)']]
-        .concat(parkHistory.map(r => [new Date(r.t).toLocaleString('id-ID'), r.slot, Math.round(r.dur / 1000), r.cost || 0]));
-      const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
-      a.download = 'riwayat_parkir.csv';
-      a.click();
-      addLog('Riwayat parkir diekspor ke CSV', 'success');
-    }
 
-    function parkClearHistory() {
-      if (!parkHistory.length || !confirm('Hapus semua riwayat parkir?')) return;
-      parkHistory = []; parkSaveHistory(); renderParking();
-      addLog('Riwayat parkir dihapus', 'warning');
-    }
 
     function parkingInit() {
-      const cfg = { slots: 3, rate: 3000, ...(appConfig.parking || {}) };
+      try { localStorage.removeItem('bt_park_history'); } catch (e) {}
+      const cfg = { slots: 3, ...(appConfig.parking || {}) };
       appConfig.parking = cfg;
       document.getElementById('parkSlotCount').value = cfg.slots;
-      document.getElementById('parkRate').value = cfg.rate;
       parkSlots = Array.from({ length: cfg.slots }, () => ({ busy: false, since: null }));
-      parkHistory = parkLoadHistory(); parkWasFull = false;
+      parkWasFull = false;
       parkChartInit();
       renderParking();
       clearInterval(parkTimer);
@@ -1626,12 +1575,11 @@
 
     function parkingSave() {
       const n = Math.min(12, Math.max(1, parseInt(document.getElementById('parkSlotCount').value) || 3));
-      const rate = Math.max(0, parseInt(document.getElementById('parkRate').value) || 0);
-      appConfig.parking = { slots: n, rate };
+      appConfig.parking = { slots: n };
       saveAppData();
       parkingInit();
-      addLog(`Smart Parking: ${n} slot, tarif ${rupiah(rate)}/jam`, "success");
-      alert(`Disimpan: ${n} slot, tarif ${rupiah(rate)}/jam`);
+      addLog(`Smart Parking: ${n} slot`, "success");
+      alert(`Jumlah slot parkir disimpan: ${n}`);
     }
 
     // Terima data "slotN:1/0"; return true jika data milik Smart Parking
@@ -1653,12 +1601,8 @@
         addLog(`Slot ${i + 1} terisi (${src})`, "info");
       } else {
         const ms = Date.now() - slot.since;
-        const cost = parkCost(ms);
-        parkHistory.unshift({ slot: i + 1, dur: ms, cost, t: Date.now() });
-        parkHistory = parkHistory.slice(0, 200);
-        parkSaveHistory();
         slot.since = null;
-        addLog(`Slot ${i + 1} kosong (${src}) - parkir ${parkFmt(ms)}, biaya ${rupiah(cost)}`, "success");
+        addLog(`Slot ${i + 1} kosong (${src}) - parkir ${parkFmt(ms)}`, "success");
       }
       parkChartPush();
       renderParking();
@@ -1727,7 +1671,7 @@
           const el = grid.children[i];
           el.classList.toggle('busy', sl.busy);
           el.querySelector('.pk-state').innerText = sl.busy ? 'Terisi' : 'Kosong';
-          el.querySelector('.pk-time').innerText = sl.busy ? `${parkFmt(Date.now() - sl.since)} · ${rupiah(parkCost(Date.now() - sl.since))}` : '';
+          el.querySelector('.pk-time').innerText = sl.busy ? parkFmt(Date.now() - sl.since) : '';
         });
       });
       const sum = document.getElementById('parkDashSummary');
@@ -1745,16 +1689,6 @@
       const bar = document.getElementById('parkBar');
       bar.style.width = pct + '%';
       bar.style.background = pct >= 100 ? 'var(--danger)' : pct >= 67 ? 'var(--warning)' : 'var(--success)';
-      const today = new Date().toDateString();
-      document.getElementById('parkRevenue').innerText = rupiah(parkHistory.filter(r => new Date(r.t).toDateString() === today).reduce((a, r) => a + (r.cost || 0), 0));
-      const h = document.getElementById('parkHistory');
-      h.innerHTML = parkHistory.length ? '' : '<p style="color: var(--text-muted);">Belum ada data.</p>';
-      parkHistory.slice(0, 10).forEach(r => {
-        const row = document.createElement('div');
-        row.className = 'park-row';
-        row.innerHTML = `<span>Slot ${r.slot} <small style="color:var(--text-muted)">${new Date(r.t || Date.now()).toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'})}</small></span><b>${parkFmt(r.dur)} · ${rupiah(r.cost || 0)}</b>`;
-        h.appendChild(row);
-      });
     }
 
     // INITIAL STARTUP
