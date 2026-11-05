@@ -963,26 +963,7 @@
             <button class="btn btn-danger" style="flex: 1;" onclick="gtManual('tutup_gerbang')">Tutup Manual</button>
           </div>
           <p style="color: var(--text-muted); font-size: 0.85rem;">Nama kelas di model harus sama dengan nama kelas di atas. Perintah BLE: <code>buka_gerbang</code> dan <code>tutup_gerbang</code>. Perintah dikirim hanya saat status berubah, setelah terdeteksi stabil beberapa frame di atas batas akurasi.</p>
-        </div>
-          <div class="widget-card">
-            <h3>Riwayat Kendaraan Keluar</h3>
-            <div id="parkHistory"><p style="color: var(--text-muted);">Belum ada data.</p></div>
-          </div>
-          <div class="widget-card">
-            <h3>Statistik & Alarm</h3>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: bold;">Bunyi alarm saat parkir penuh:</span>
-              <label class="switch"><input type="checkbox" id="parkAlarm" onchange="parkSaveAlarm()"><span class="slider-toggle"></span></label>
-            </div>
-            <div class="park-row"><span>Total kendaraan keluar</span><b id="parkStatCount">0</b></div>
-            <div class="park-row"><span>Rata-rata durasi</span><b id="parkStatAvg">-</b></div>
-            <p style="color: var(--text-muted); font-size: 0.85rem;">Riwayat dan status slot tersimpan di browser.</p>
-            <div style="display: flex; gap: 10px;">
-              <button class="btn btn-purple" style="flex: 1;" onclick="parkExportCSV()"><svg class="ic"><use href="#i-download"/></svg> Ekspor CSV</button>
-              <button class="btn btn-danger" onclick="parkClearHistory()"><svg class="ic"><use href="#i-trash"/></svg> Hapus</button>
-            </div>
-          </div>
-        </div>
+        </div>        </div>
       </div>
 
       <!-- PAGE: SETTINGS & BACKUP -->
@@ -1622,17 +1603,16 @@
     }
 
     // SMART PARKING
-    let parkSlots = [], parkHistory = [], parkTimer = null, parkChart = null;
+    let parkSlots = [], parkTimer = null, parkChart = null;
 
     function parkingInit() {
-      const cfg = { slots: 3, alarm: true, ...(appConfig.parking || {}) };
+      const cfg = { slots: 3, ...(appConfig.parking || {}) };
       appConfig.parking = cfg;
       document.getElementById('parkSlotCount').value = cfg.slots;
-      document.getElementById('parkAlarm').checked = cfg.alarm;
       const saved = Array.isArray(appConfig.parkState) ? appConfig.parkState : [];
       parkSlots = Array.from({ length: cfg.slots }, (_, i) =>
         saved[i] && saved[i].busy && saved[i].since ? { busy: true, since: saved[i].since } : { busy: false, since: null });
-      parkHistory = Array.isArray(appConfig.parkLog) ? appConfig.parkLog : [];
+      delete appConfig.parkLog;
       parkChartInit();
       renderParking();
       clearInterval(parkTimer);
@@ -1667,16 +1647,12 @@
         addLog(`Slot ${i + 1} terisi (${src})`, "info");
       } else {
         const ms = Date.now() - slot.since;
-        parkHistory.unshift({ slot: i + 1, dur: ms, end: Date.now() });
-        parkHistory = parkHistory.slice(0, 500);
-        appConfig.parkLog = parkHistory;
         slot.since = null;
         addLog(`Slot ${i + 1} kosong (${src}) - parkir ${parkFmt(ms)}`, "success");
       }
       parkPersist();
       parkChartPush();
       renderParking();
-      if (busy && parkSlots.every(x => x.busy)) parkFullAlert();
     }
 
     function parkChartInit() {
@@ -1711,40 +1687,6 @@
       appConfig.parkState = parkSlots.map(x => ({ busy: x.busy, since: x.since }));
       saveAppData();
     }
-    function parkSaveAlarm() {
-      appConfig.parking.alarm = document.getElementById('parkAlarm').checked;
-      saveAppData();
-    }
-    function parkFullAlert() {
-      addLog("Parkiran PENUH!", "warning");
-      if (!appConfig.parking.alarm) return;
-      try {
-        const ac = new (window.AudioContext || window.webkitAudioContext)();
-        [0, 0.25].forEach(t => {
-          const o = ac.createOscillator(), g = ac.createGain();
-          o.frequency.value = 880; g.gain.value = 0.15;
-          o.connect(g); g.connect(ac.destination);
-          o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.18);
-        });
-      } catch (e) {}
-    }
-    function parkExportCSV() {
-      if (!parkHistory.length) return alert("Belum ada riwayat untuk diekspor.");
-      const rows = ['Waktu Keluar,Slot,Durasi (detik)'];
-      parkHistory.forEach(r => rows.push(`${new Date(r.end || 0).toLocaleString('id-ID').replace(',', '')},${r.slot},${Math.round(r.dur / 1000)}`));
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv' }));
-      a.download = 'riwayat_parkir.csv';
-      a.click();
-      addLog("Riwayat parkir diekspor ke CSV", "success");
-    }
-    function parkClearHistory() {
-      if (!parkHistory.length || !confirm("Hapus semua riwayat parkir?")) return;
-      parkHistory = []; appConfig.parkLog = [];
-      saveAppData(); renderParking();
-      addLog("Riwayat parkir dihapus", "warning");
-    }
-
     const PARK_CAR_COLORS = ['#3b82f6', '#f59e0b', '#22d3ee', '#e5e7eb', '#fb7185'];
     const PARK_CAR_SVG = `<svg class="pk-car" viewBox="0 0 60 110" aria-hidden="true">
       <rect class="car-tire" x="3" y="18" width="7" height="20" rx="3"/><rect class="car-tire" x="50" y="18" width="7" height="20" rx="3"/>
@@ -1789,17 +1731,6 @@
       document.getElementById('parkFree').innerText = parkSlots.length - busy;
       document.getElementById('parkBusy').innerText = busy;
       document.getElementById('parkFullBadge').innerText = (parkSlots.length && busy === parkSlots.length) ? 'PENUH' : '';
-      const h = document.getElementById('parkHistory');
-      h.innerHTML = parkHistory.length ? '' : '<p style="color: var(--text-muted);">Belum ada data.</p>';
-      parkHistory.slice(0, 10).forEach(r => {
-        const row = document.createElement('div');
-        row.className = 'park-row';
-        row.innerHTML = `<span>Slot ${r.slot}</span><b>${parkFmt(r.dur)}</b>`;
-        h.appendChild(row);
-      });
-      const n = parkHistory.length, sumDur = parkHistory.reduce((a, r) => a + r.dur, 0);
-      document.getElementById('parkStatCount').innerText = n;
-      document.getElementById('parkStatAvg').innerText = n ? parkFmt(sumDur / n) : '-';
     }
 
     // AVATAR VEKTOR (SVG) UNTUK FOTO PROFIL
