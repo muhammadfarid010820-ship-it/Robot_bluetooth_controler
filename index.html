@@ -2,13 +2,14 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
   <title id="docTitle">Controller Bluetooth</title>
   
   <!-- CDN External Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -569,16 +570,67 @@
     .car-lf { fill: #fff6b8; }
     .car-lr { fill: #ff4d6a; }
     @media (prefers-reduced-motion: reduce) { .pk-car, .park-slot.busy .pk-car { transition: none; } }
+    /* ===== TAMPILAN HP / TABLET ===== */
+    #logToggleBtn, .log-close { display: none; }
+    .d-pad .btn, .gripper-controls .btn { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+    .btn, .nav-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
-    /* ===== UPGRADE: SMART PARKING ===== */
-    .occ-bar { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; }
-    .occ-fill { height: 100%; width: 0; border-radius: 99px; background: var(--success); transition: width .5s, background .3s; }
-    .park-slot .pk-time { font-weight: 600; }
-    .park-row b { font-variant-numeric: tabular-nums; }
-    .park-full-banner { display: none; background: rgba(244,63,94,.15); border: 1px solid var(--danger); color: var(--danger); font-weight: 800; text-align: center; padding: 10px; border-radius: 12px; letter-spacing: .08em; }
-    .park-full-banner.show { display: block; animation: pkPulse 1.2s ease-in-out infinite; }
-    @keyframes pkPulse { 50% { box-shadow: 0 0 22px rgba(244,63,94,.45); } }
-    @media (prefers-reduced-motion: reduce) { .park-full-banner.show { animation: none; } }
+    @media (max-width: 900px) {
+      body, #app-container { height: 100vh; height: 100dvh; }
+      #app-container { flex-direction: column; width: 100%; }
+      .main-content { order: 1; flex: 1; min-height: 0; padding: 0.8rem; gap: 1rem; -webkit-overflow-scrolling: touch; }
+
+      /* menu kiri menjadi bar bawah yang bisa digeser */
+      .sidebar {
+        order: 2; width: 100%; flex-direction: row; align-items: stretch; gap: 4px;
+        padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+        border-right: none; border-top: 1px solid var(--border-color);
+        overflow-x: auto; overflow-y: hidden; flex: none; scrollbar-width: none;
+      }
+      .sidebar::-webkit-scrollbar { display: none; }
+      .profile-card, #webTitleNav { display: none; }
+      .nav-btn { flex: 0 0 auto; width: auto; min-width: 74px; flex-direction: column; justify-content: center; gap: 3px; padding: 6px 8px; font-size: 0.68rem; text-align: center; white-space: nowrap; }
+      .sidebar > div[style*="margin-top"] { margin-top: 0 !important; flex: 0 0 auto; display: flex; }
+      .sidebar .btn-danger { width: auto !important; min-width: 74px; flex-direction: column; gap: 3px; padding: 6px 8px; font-size: 0.68rem; }
+
+      .top-bar { padding: 0.6rem; gap: 8px; flex-wrap: wrap; }
+      #statusText { font-size: 0.85rem; }
+      #connectBtn { padding: 8px 12px; font-size: 0.85rem; }
+      #logToggleBtn, .log-close { display: inline-flex; }
+
+      /* panel log menjadi lembar yang naik dari bawah */
+      .activity-panel {
+        position: fixed; left: 0; right: 0; bottom: 0; width: 100%; height: 55vh; height: 55dvh;
+        border-left: none; border-top: 1px solid var(--border-color); border-radius: 14px 14px 0 0;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        transform: translateY(105%); transition: transform 0.25s ease; z-index: 50;
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.4);
+      }
+      .activity-panel.open { transform: translateY(0); }
+      .activity-panel > div:first-child { gap: 8px; }
+      .activity-panel > div:first-child h3 { margin-right: auto; }
+
+      .widget-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .widget-card { padding: 1rem; }
+      .form-control { font-size: 16px; }
+      h2 { font-size: 1.25rem; }
+      .park-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+      .tm-webcam-container { min-height: 200px; }
+      .lock-card { width: min(320px, 88vw); }
+    }
+
+    @media (max-width: 400px) {
+      .d-pad { grid-template-columns: repeat(3, 68px); grid-template-rows: repeat(3, 68px); gap: 8px; }
+      .nav-btn, .sidebar .btn-danger { min-width: 66px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .activity-panel { transition: none; } }
+    /* PILIHAN FOTO PROFIL */
+    .avatar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px; }
+    .avatar-opt { padding: 0; background: none; border: 3px solid transparent; border-radius: 50%; cursor: pointer; aspect-ratio: 1; overflow: hidden; }
+    .avatar-opt img { width: 100%; height: 100%; display: block; border-radius: 50%; }
+    .avatar-opt:hover { border-color: var(--text-muted); }
+    .avatar-opt.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--panel-dark), 0 0 0 4px var(--accent); }
+    .avatar-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   </style>
 </head>
 <body>
@@ -623,7 +675,7 @@
     <!-- NAVBAR KIRI -->
     <div class="sidebar">
       <div class="profile-card">
-        <img id="userImgNav" src="Membawa Sajam.jpg" class="profile-img" alt="Foto Profil">
+        <img id="userImgNav" class="profile-img" alt="Foto Profil">
         <div class="profile-info">
           <span id="userNameNav" style="font-weight: bold; font-size: 0.95rem;">Pengguna</span>
           <span id="userRoleBadge" class="role-badge role-user">User</span>
@@ -650,7 +702,10 @@
         <div>
           <span id="statusText" style="font-weight: bold; color: var(--danger);">Status: Terputus</span>
         </div>
-        <button id="connectBtn" class="btn">Hubungkan Bluetooth</button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button id="logToggleBtn" class="btn btn-sm" onclick="toggleLogPanel()">Log</button>
+          <button id="connectBtn" class="btn">Hubungkan Bluetooth</button>
+        </div>
       </div>
 
       <!-- PAGE: DASHBOARD -->
@@ -855,11 +910,9 @@
         <div class="widget-grid" style="margin-bottom: 1.5rem;">
           <div class="widget-card"><h3>Slot Kosong</h3><div id="parkFree" class="sensor-value" style="color: var(--success);">0</div></div>
           <div class="widget-card"><h3>Slot Terisi</h3><div id="parkBusy" class="sensor-value" style="color: var(--danger);">0</div></div>
-          <div class="widget-card"><h3>Okupansi</h3><div id="parkPct" class="sensor-value">0%</div><div class="occ-bar"><div id="parkBar" class="occ-fill"></div></div></div>
         </div>
 
         <div class="widget-card" style="margin-bottom: 1.5rem;">
-          <div id="parkFullBanner" class="park-full-banner">PARKIRAN PENUH</div>
           <div class="widget-header"><h3>Denah Slot</h3><span id="parkFullBadge" style="font-weight: bold; color: var(--danger);"></span></div>
           <p style="color: var(--text-muted); font-size: 0.85rem;">Sensor mengirim <code>masuk1:1</code> (terisi) atau <code>masuk1:0</code> (kosong). Klik slot untuk simulasi manual. Jumlah slot diatur di menu Widget Builder.</p>
           <div id="parkGrid" class="park-grid"></div>
@@ -904,14 +957,49 @@
             <div class="tm-placeholder">Masukkan link model lalu tekan Load Model & Kamera</div>
           </div>
           <div id="gtPredictionList" class="tm-prediction-list"></div>
-          <p style="color: var(--text-muted); font-size: 0.85rem;">Nama kelas di model harus sama dengan nama kelas di atas. Gerbang sepenuhnya dikendalikan kamera. Perintah BLE: <code>buka_gerbang</code> dan <code>tutup_gerbang</code>. Perintah dikirim hanya saat status berubah, setelah terdeteksi stabil beberapa frame di atas batas akurasi.</p>
+
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-success" style="flex: 1;" onclick="gtManual('buka_gerbang')">Buka Manual</button>
+            <button class="btn btn-danger" style="flex: 1;" onclick="gtManual('tutup_gerbang')">Tutup Manual</button>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Nama kelas di model harus sama dengan nama kelas di atas. Perintah BLE: <code>buka_gerbang</code> dan <code>tutup_gerbang</code>. Perintah dikirim hanya saat status berubah, setelah terdeteksi stabil beberapa frame di atas batas akurasi.</p>
         </div>
+          <div class="widget-card">
+            <h3>Riwayat Kendaraan Keluar</h3>
+            <div id="parkHistory"><p style="color: var(--text-muted);">Belum ada data.</p></div>
+          </div>
+          <div class="widget-card">
+            <h3>Statistik & Alarm</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: bold;">Bunyi alarm saat parkir penuh:</span>
+              <label class="switch"><input type="checkbox" id="parkAlarm" onchange="parkSaveAlarm()"><span class="slider-toggle"></span></label>
+            </div>
+            <div class="park-row"><span>Total kendaraan keluar</span><b id="parkStatCount">0</b></div>
+            <div class="park-row"><span>Rata-rata durasi</span><b id="parkStatAvg">-</b></div>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Riwayat dan status slot tersimpan di browser.</p>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-purple" style="flex: 1;" onclick="parkExportCSV()"><svg class="ic"><use href="#i-download"/></svg> Ekspor CSV</button>
+              <button class="btn btn-danger" onclick="parkClearHistory()"><svg class="ic"><use href="#i-trash"/></svg> Hapus</button>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- PAGE: SETTINGS & BACKUP -->
       <div id="setting" class="page">
         <h2 style="margin-bottom: 1rem;">Website Settings & Backup Data</h2>
+        <div class="widget-card" style="max-width: 500px; margin-bottom: 1.5rem;">
+          <h3>Foto Profil</h3>
+          <div class="form-group">
+            <label>Mode Foto Profil:</label>
+            <select id="avatarMode" class="form-control" onchange="avatarSetMode(this.value)">
+              <option value="random">Ganti acak setiap login</option>
+              <option value="fixed">Tetap (pilih sendiri)</option>
+            </select>
+          </div>
+          <div id="avatarGrid" class="avatar-grid"></div>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Klik gambar untuk memilih. Memilih gambar otomatis mengubah mode menjadi Tetap. Pengaturan ini tersimpan di browser perangkat ini.</p>
+        </div>
         <div class="widget-card" style="max-width: 500px;">
           <div class="form-group">
             <label>Tema Website:</label>
@@ -942,6 +1030,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3>System Activity</h3>
         <button onclick="clearLogs()" style="background:none; border:none; color: var(--text-muted); cursor:pointer; font-size:0.8rem;">Bersihkan</button>
+        <button class="log-close btn btn-sm" onclick="toggleLogPanel()">Tutup</button>
       </div>
       <div id="activityLogs" class="activity-logs">
         <div class="log-card log-info">System siap digunakan</div>
@@ -1066,12 +1155,13 @@
     }
 
     function applyRolePermissions() {
+      avatarApply(avatarPickForLogin());
       const badge = document.getElementById('userRoleBadge');
       const settingNav = document.getElementById('navSettingBtn');
       if (currentUserRole === "dev") {
         badge.innerText = "Developer";
         badge.className = "role-badge role-dev";
-        settingNav.style.display = "block";
+        settingNav.style.display = "flex";
       } else {
         badge.innerText = "User";
         badge.className = "role-badge role-user";
@@ -1090,16 +1180,15 @@
       const target = document.getElementById(pageId);
       if (target) target.classList.add('active');
       const navBtn = document.querySelector(`.nav-btn[onclick*="'${pageId}'"]`);
-      if (navBtn) navBtn.classList.add('active');
+      if (navBtn) { navBtn.classList.add('active'); navBtn.scrollIntoView({ inline: 'center', block: 'nearest' }); }
     }
 
     function addLog(msg, type="info") {
       const container = document.getElementById('activityLogs');
       const card = document.createElement('div');
       card.className = `log-card log-${type}`;
-      card.innerText = `[${new Date().toLocaleTimeString('id-ID')}] ${msg}`;
+      card.innerText = msg;
       container.appendChild(card);
-      while (container.children.length > 100) container.removeChild(container.firstChild);
       container.scrollTop = container.scrollHeight;
     }
 
@@ -1144,7 +1233,6 @@
         });
 
         bleDevice.addEventListener('gattserverdisconnected', () => {
-          rxCharacteristic = null; txCharacteristic = null;
           statusText.innerText = "Status: Terputus";
           statusText.style.color = "var(--danger)";
           connectBtn.innerText = "Hubungkan Bluetooth";
@@ -1287,19 +1375,6 @@
       const stopThresh = parseInt(document.getElementById('stopThreshRange').value) / 100;
       const autoSend = document.getElementById('tmAutoSendToggle').checked;
 
-      const tmList = document.getElementById('tmPredictionList');
-      tmList.innerHTML = '';
-      prediction.forEach((p, i) => {
-        const row = document.createElement('div');
-        row.className = 'tm-pred-item' + (i === bestIdx ? ' active' : '');
-        const n = document.createElement('span'); n.innerText = p.className;
-        const v = document.createElement('span');
-        v.className = 'tm-confidence' + (p.probability >= sendThresh ? ' high' : '');
-        v.innerText = Math.round(p.probability * 100) + '%';
-        row.append(n, v);
-        tmList.appendChild(row);
-      });
-
       const bestClass = prediction[bestIdx].className;
       if (autoSend) {
         if (bestProb >= sendThresh) {
@@ -1329,7 +1404,7 @@
       const reader = new FileReader();
       reader.onload = (evt) => {
         try {
-          appConfig = { ...appConfig, ...JSON.parse(evt.target.result) };
+          appConfig = JSON.parse(evt.target.result);
           saveAppData();
           location.reload();
         } catch(err) {
@@ -1360,30 +1435,26 @@
         if (w.category === "input") {
           card.innerHTML = `
             <div class="widget-header">
-              <h3>${esc(w.name)} (Input)</h3>
-              <button class="btn btn-danger btn-sm" data-rm><svg class="ic"><use href="#i-trash"/></svg></button>
+              <h3>${w.name} (Input)</h3>
+              <button class="btn btn-danger btn-sm" onclick="removeWidget('${w.key}')"><svg class="ic"><use href="#i-trash"/></svg></button>
             </div>
-            <div id="widget_val_${esc(w.key)}" class="sensor-value">--</div>
+            <div id="widget_val_${w.key}" class="sensor-value">--</div>
           `;
         } else {
           card.innerHTML = `
             <div class="widget-header">
-              <h3>${esc(w.name)} (Output)</h3>
-              <button class="btn btn-danger btn-sm" data-rm><svg class="ic"><use href="#i-trash"/></svg></button>
+              <h3>${w.name} (Output)</h3>
+              <button class="btn btn-danger btn-sm" onclick="removeWidget('${w.key}')"><svg class="ic"><use href="#i-trash"/></svg></button>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
-              <button class="btn" data-send="1">Send 1</button>
-              <button class="btn btn-danger" data-send="0">Send 0</button>
+              <button class="btn" onclick="sendBLEData('${w.key},1')">Send 1</button>
+              <button class="btn btn-danger" onclick="sendBLEData('${w.key},0')">Send 0</button>
             </div>
           `;
         }
-        card.querySelector('[data-rm]').onclick = () => removeWidget(w.key);
-        card.querySelectorAll('[data-send]').forEach(b => b.onclick = () => sendBLEData(`${w.key},${b.dataset.send}`));
         grid.appendChild(card);
       });
     }
-
-    function esc(t) { return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
     function removeWidget(key) {
       appConfig.widgets = appConfig.widgets.filter(w => w.key !== key);
@@ -1424,6 +1495,12 @@
       document.getElementById('gtLastSent').innerText = 'Perintah terakhir: ' + (cmd || '-');
     }
 
+    function gtManual(cmd) {
+      gtLastSent = cmd;
+      gtCand = null; gtCount = 0;
+      sendBLEData(cmd);
+      gtShowSent(cmd);
+    }
 
     async function gtLoad() {
       let url = document.getElementById('gtUrl').value.trim().replace(/\/?(model|metadata)\.json$/, '').replace(/\/$/, '');
@@ -1545,28 +1622,17 @@
     }
 
     // SMART PARKING
-    let parkSlots = [], parkTimer = null, parkChart = null, parkWasFull = false;
-
-
-    function parkBeep() {
-      try {
-        const a = new (window.AudioContext || window.webkitAudioContext)();
-        const o = a.createOscillator(), g = a.createGain();
-        o.connect(g); g.connect(a.destination);
-        o.frequency.value = 880; g.gain.value = 0.05;
-        o.start(); o.stop(a.currentTime + 0.25);
-      } catch (e) {}
-    }
-
-
+    let parkSlots = [], parkHistory = [], parkTimer = null, parkChart = null;
 
     function parkingInit() {
-      try { localStorage.removeItem('bt_park_history'); } catch (e) {}
-      const cfg = { slots: 3, ...(appConfig.parking || {}) };
+      const cfg = { slots: 3, alarm: true, ...(appConfig.parking || {}) };
       appConfig.parking = cfg;
       document.getElementById('parkSlotCount').value = cfg.slots;
-      parkSlots = Array.from({ length: cfg.slots }, () => ({ busy: false, since: null }));
-      parkWasFull = false;
+      document.getElementById('parkAlarm').checked = cfg.alarm;
+      const saved = Array.isArray(appConfig.parkState) ? appConfig.parkState : [];
+      parkSlots = Array.from({ length: cfg.slots }, (_, i) =>
+        saved[i] && saved[i].busy && saved[i].since ? { busy: true, since: saved[i].since } : { busy: false, since: null });
+      parkHistory = Array.isArray(appConfig.parkLog) ? appConfig.parkLog : [];
       parkChartInit();
       renderParking();
       clearInterval(parkTimer);
@@ -1575,7 +1641,7 @@
 
     function parkingSave() {
       const n = Math.min(12, Math.max(1, parseInt(document.getElementById('parkSlotCount').value) || 3));
-      appConfig.parking = { slots: n };
+      appConfig.parking = { ...appConfig.parking, slots: n };
       saveAppData();
       parkingInit();
       addLog(`Smart Parking: ${n} slot`, "success");
@@ -1601,11 +1667,16 @@
         addLog(`Slot ${i + 1} terisi (${src})`, "info");
       } else {
         const ms = Date.now() - slot.since;
+        parkHistory.unshift({ slot: i + 1, dur: ms, end: Date.now() });
+        parkHistory = parkHistory.slice(0, 500);
+        appConfig.parkLog = parkHistory;
         slot.since = null;
         addLog(`Slot ${i + 1} kosong (${src}) - parkir ${parkFmt(ms)}`, "success");
       }
+      parkPersist();
       parkChartPush();
       renderParking();
+      if (busy && parkSlots.every(x => x.busy)) parkFullAlert();
     }
 
     function parkChartInit() {
@@ -1634,6 +1705,44 @@
     function parkFmt(ms) {
       const t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
       return `${h ? h + 'j ' : ''}${m}m ${s}d`;
+    }
+
+    function parkPersist() {
+      appConfig.parkState = parkSlots.map(x => ({ busy: x.busy, since: x.since }));
+      saveAppData();
+    }
+    function parkSaveAlarm() {
+      appConfig.parking.alarm = document.getElementById('parkAlarm').checked;
+      saveAppData();
+    }
+    function parkFullAlert() {
+      addLog("Parkiran PENUH!", "warning");
+      if (!appConfig.parking.alarm) return;
+      try {
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 0.25].forEach(t => {
+          const o = ac.createOscillator(), g = ac.createGain();
+          o.frequency.value = 880; g.gain.value = 0.15;
+          o.connect(g); g.connect(ac.destination);
+          o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.18);
+        });
+      } catch (e) {}
+    }
+    function parkExportCSV() {
+      if (!parkHistory.length) return alert("Belum ada riwayat untuk diekspor.");
+      const rows = ['Waktu Keluar,Slot,Durasi (detik)'];
+      parkHistory.forEach(r => rows.push(`${new Date(r.end || 0).toLocaleString('id-ID').replace(',', '')},${r.slot},${Math.round(r.dur / 1000)}`));
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv' }));
+      a.download = 'riwayat_parkir.csv';
+      a.click();
+      addLog("Riwayat parkir diekspor ke CSV", "success");
+    }
+    function parkClearHistory() {
+      if (!parkHistory.length || !confirm("Hapus semua riwayat parkir?")) return;
+      parkHistory = []; appConfig.parkLog = [];
+      saveAppData(); renderParking();
+      addLog("Riwayat parkir dihapus", "warning");
     }
 
     const PARK_CAR_COLORS = ['#3b82f6', '#f59e0b', '#22d3ee', '#e5e7eb', '#fb7185'];
@@ -1675,25 +1784,129 @@
         });
       });
       const sum = document.getElementById('parkDashSummary');
-      const pct = parkSlots.length ? Math.round(busy / parkSlots.length * 100) : 0;
-      sum.innerText = `${busy}/${parkSlots.length} terisi (${pct}%)`;
+      sum.innerText = `${busy}/${parkSlots.length} terisi`;
       sum.style.color = busy === parkSlots.length ? 'var(--danger)' : 'var(--success)';
       document.getElementById('parkFree').innerText = parkSlots.length - busy;
       document.getElementById('parkBusy').innerText = busy;
-      const full = parkSlots.length > 0 && busy === parkSlots.length;
-      document.getElementById('parkFullBadge').innerText = full ? 'PENUH' : '';
-      document.getElementById('parkFullBanner').classList.toggle('show', full);
-      if (full && !parkWasFull) { addLog('Parkiran PENUH!', 'warning'); parkBeep(); }
-      parkWasFull = full;
-      document.getElementById('parkPct').innerText = pct + '%';
-      const bar = document.getElementById('parkBar');
-      bar.style.width = pct + '%';
-      bar.style.background = pct >= 100 ? 'var(--danger)' : pct >= 67 ? 'var(--warning)' : 'var(--success)';
+      document.getElementById('parkFullBadge').innerText = (parkSlots.length && busy === parkSlots.length) ? 'PENUH' : '';
+      const h = document.getElementById('parkHistory');
+      h.innerHTML = parkHistory.length ? '' : '<p style="color: var(--text-muted);">Belum ada data.</p>';
+      parkHistory.slice(0, 10).forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'park-row';
+        row.innerHTML = `<span>Slot ${r.slot}</span><b>${parkFmt(r.dur)}</b>`;
+        h.appendChild(row);
+      });
+      const n = parkHistory.length, sumDur = parkHistory.reduce((a, r) => a + r.dur, 0);
+      document.getElementById('parkStatCount').innerText = n;
+      document.getElementById('parkStatAvg').innerText = n ? parkFmt(sumDur / n) : '-';
     }
+
+    // AVATAR VEKTOR (SVG) UNTUK FOTO PROFIL
+    const AVATAR_DEV = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs><rect width="96" height="96" fill="url(#g)"/><path d="M12 96c0-19 15-29 36-29s36 10 36 29z" fill="#312e81"/><rect x="42" y="56" width="12" height="16" rx="5" fill="#e8b48a"/><path d="M37 69l11 15 11-15-4-3H41z" fill="#1e1b4b"/><path d="M43 76v12M53 76v12" stroke="#e0e7ff" stroke-width="2" stroke-linecap="round"/><ellipse cx="48" cy="43" rx="17" ry="19" fill="#f2c29b"/><path d="M30 42c-3-17 7-26 18-26s21 9 18 26c-3-8-8-12-18-12s-15 4-18 12z" fill="#1f2937"/><path d="M27 44c0-19 8-28 21-28s21 9 21 28" fill="none" stroke="#f43f5e" stroke-width="4" stroke-linecap="round"/><rect x="23" y="38" width="8" height="15" rx="4" fill="#f43f5e"/><rect x="65" y="38" width="8" height="15" rx="4" fill="#f43f5e"/><rect x="34" y="40" width="12" height="9" rx="3.5" fill="#fff" fill-opacity=".25" stroke="#111827" stroke-width="2"/><rect x="50" y="40" width="12" height="9" rx="3.5" fill="#fff" fill-opacity=".25" stroke="#111827" stroke-width="2"/><path d="M46 44h4" stroke="#111827" stroke-width="2"/><circle cx="40" cy="45" r="1.7" fill="#111827"/><circle cx="56" cy="45" r="1.7" fill="#111827"/><path d="M42 55q6 5 12 0" fill="none" stroke="#9a3412" stroke-width="2" stroke-linecap="round"/></svg>`);
+    const AVATAR_USER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#fb923c"/></linearGradient></defs><rect width="96" height="96" fill="url(#g)"/><path d="M12 96c0-19 15-29 36-29s36 10 36 29z" fill="#14b8a6"/><rect x="42" y="56" width="12" height="16" rx="5" fill="#d9a273"/><path d="M38 68l10 14 10-14-4-2H42z" fill="#0f766e"/><circle cx="31" cy="46" r="3.5" fill="#d9a273"/><circle cx="65" cy="46" r="3.5" fill="#d9a273"/><ellipse cx="48" cy="43" rx="17" ry="19" fill="#e0ac82"/><path d="M30 43c-3-18 7-27 19-27 12 0 19 8 17 27-2-7-6-13-12-14-8 3-16 4-24 14z" fill="#3b2417"/><path d="M37 41q4-3 8 0M51 41q4-3 8 0" fill="none" stroke="#3b2417" stroke-width="1.8" stroke-linecap="round"/><circle cx="41" cy="46" r="2" fill="#1f2937"/><circle cx="55" cy="46" r="2" fill="#1f2937"/><circle cx="37" cy="52" r="3" fill="#fb7185" fill-opacity=".35"/><circle cx="59" cy="52" r="3" fill="#fb7185" fill-opacity=".35"/><path d="M41 54q7 8 14 0" fill="none" stroke="#7c2d12" stroke-width="2" stroke-linecap="round"/></svg>`);
+
+    // KOLEKSI AVATAR: 2 buatan tangan + 10 dibuat dari generator
+    function makeAvatar(o) {
+      const hair = o.hair || '#1f2937', skin = o.skin, st = o.style || 'short';
+      let back = '', front = '';
+      if (st === 'long') back = `<path d="M28 46c-2-21 8-30 20-30s22 9 20 30v24H28z" fill="${hair}"/>`;
+      if (st === 'curly') back = [[34,28,8],[44,21,9],[56,21,9],[64,29,8],[30,40,6],[66,40,6]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${hair}"/>`).join('');
+      if (st === 'bun') back = `<circle cx="48" cy="14" r="7" fill="${hair}"/>`;
+      if (o.hijab) back = `<path d="M25 48c-2-23 9-33 23-33s25 10 23 33c0 12-4 22-9 28H34c-5-6-9-16-9-28z" fill="${o.hijab}"/>`;
+      if (st === 'short' || st === 'bun') front = `<path d="M30 43c-3-18 7-27 19-27 12 0 19 8 17 27-2-7-6-13-12-14-8 3-16 4-24 14z" fill="${hair}"/>`;
+      if (st === 'long' || st === 'curly') front = `<path d="M31 41c3-10 10-13 17-13s14 3 17 13c-6-5-11-6-17-6s-11 1-17 6z" fill="${hair}"/>`;
+      if (o.cap) front = `<path d="M29 40c0-15 8-22 19-22s19 7 19 22z" fill="${o.cap}"/><rect x="27" y="38" width="42" height="5" rx="2.5" fill="${o.cap}"/><rect x="27" y="38" width="42" height="5" rx="2.5" fill="#000" fill-opacity=".2"/>`;
+      const head = o.hijab ? `<ellipse cx="48" cy="46" rx="14" ry="16" fill="${skin}"/>` : `<circle cx="31" cy="46" r="3.5" fill="${skin}"/><circle cx="65" cy="46" r="3.5" fill="${skin}"/><ellipse cx="48" cy="43" rx="17" ry="19" fill="${skin}"/>`;
+      const neck = o.hijab ? '' : `<rect x="42" y="56" width="12" height="16" rx="5" fill="${skin}"/>`;
+      const brows = o.cap ? '' : `<path d="M37 41q4-3 8 0M51 41q4-3 8 0" fill="none" stroke="${o.hijab ? '#3b2417' : hair}" stroke-width="1.8" stroke-linecap="round"/>`;
+      let acc = '';
+      if (o.beard) acc += `<path d="M34 50c0 12 6 18 14 18s14-6 14-18c-3 6-8 8-14 8s-11-2-14-8z" fill="${hair}"/>`;
+      if (o.phones) acc += `<path d="M27 44c0-19 8-28 21-28s21 9 21 28" fill="none" stroke="#f43f5e" stroke-width="4" stroke-linecap="round"/><rect x="23" y="38" width="8" height="15" rx="4" fill="#f43f5e"/><rect x="65" y="38" width="8" height="15" rx="4" fill="#f43f5e"/>`;
+      if (o.glasses) acc += `<rect x="34" y="40" width="12" height="9" rx="3.5" fill="#fff" fill-opacity=".25" stroke="#111827" stroke-width="2"/><rect x="50" y="40" width="12" height="9" rx="3.5" fill="#fff" fill-opacity=".25" stroke="#111827" stroke-width="2"/><path d="M46 44h4" stroke="#111827" stroke-width="2"/>`;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${o.bg[0]}"/><stop offset="1" stop-color="${o.bg[1]}"/></linearGradient></defs><rect width="96" height="96" fill="url(#g)"/><path d="M12 96c0-19 15-29 36-29s36 10 36 29z" fill="${o.shirt}"/>${back}${neck}${head}${front}${brows}<circle cx="41" cy="46" r="2" fill="#1f2937"/><circle cx="55" cy="46" r="2" fill="#1f2937"/><circle cx="37" cy="52" r="3" fill="#fb7185" fill-opacity=".3"/><circle cx="59" cy="52" r="3" fill="#fb7185" fill-opacity=".3"/><path d="M42 54q6 6 12 0" fill="none" stroke="${o.beard ? '#fde2d8' : '#7c2d12'}" stroke-width="2" stroke-linecap="round"/>${acc}</svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    const AVATARS = [
+      { name: 'Developer', src: AVATAR_DEV },
+      { name: 'Kasual', src: AVATAR_USER },
+      { name: 'Mint', o: { bg: ['#a7f3d0', '#34d399'], skin: '#f2c29b', hair: '#1f2937', shirt: '#2563eb' } },
+      { name: 'Hijab Ungu', o: { bg: ['#fbcfe8', '#c084fc'], skin: '#f2c29b', hijab: '#7c3aed', shirt: '#5b21b6' } },
+      { name: 'Rambut Panjang', o: { bg: ['#bae6fd', '#38bdf8'], skin: '#d9a273', hair: '#7c2d12', style: 'long', shirt: '#f43f5e' } },
+      { name: 'Topi Oranye', o: { bg: ['#fed7aa', '#f97316'], skin: '#8d5a3b', cap: '#0ea5e9', shirt: '#facc15' } },
+      { name: 'Keriting', o: { bg: ['#ddd6fe', '#8b5cf6'], skin: '#8d5a3b', hair: '#111827', style: 'curly', shirt: '#10b981' } },
+      { name: 'Cepol', o: { bg: ['#fecdd3', '#fb7185'], skin: '#f2c29b', hair: '#92400e', style: 'bun', shirt: '#0f766e', glasses: 1 } },
+      { name: 'Berjanggut', o: { bg: ['#bbf7d0', '#16a34a'], skin: '#e0ac82', hair: '#374151', beard: 1, phones: 1, shirt: '#334155' } },
+      { name: 'Hijab Tosca', o: { bg: ['#fde68a', '#f59e0b'], skin: '#e0ac82', hijab: '#0d9488', glasses: 1, shirt: '#115e59' } },
+      { name: 'Panjang Berkacamata', o: { bg: ['#c7d2fe', '#6366f1'], skin: '#f2c29b', hair: '#111827', style: 'long', glasses: 1, shirt: '#f59e0b' } },
+      { name: 'Headphone', o: { bg: ['#99f6e4', '#14b8a6'], skin: '#d9a273', hair: '#b45309', phones: 1, shirt: '#ef4444' } }
+    ].map(a => ({ name: a.name, src: a.src || makeAvatar(a.o) }));
+
+    let avatarShown = 1;
+
+    // Mode acak: ganti ke avatar lain (bukan yang terakhir) setiap kali ada yang login
+    function avatarPickForLogin() {
+      let i;
+      if (appConfig.avatarMode === 'fixed' && AVATARS[appConfig.avatarFixed]) i = appConfig.avatarFixed;
+      else do { i = Math.floor(Math.random() * AVATARS.length); } while (AVATARS.length > 1 && i === appConfig.avatarLast);
+      appConfig.avatarLast = i;
+      saveAppData();
+      return i;
+    }
+
+    function avatarApply(i) {
+      avatarShown = i;
+      document.getElementById('userImgNav').src = AVATARS[i].src;
+      avatarRenderGrid();
+    }
+
+    function avatarInit() {
+      avatarApply(AVATARS[appConfig.avatarLast] ? appConfig.avatarLast : 1);
+    }
+
+    function avatarSetMode(m) {
+      appConfig.avatarMode = m === 'fixed' ? 'fixed' : 'random';
+      if (appConfig.avatarMode === 'fixed' && !AVATARS[appConfig.avatarFixed]) appConfig.avatarFixed = avatarShown;
+      saveAppData();
+      addLog(`Mode foto profil: ${appConfig.avatarMode === 'fixed' ? 'tetap' : 'acak tiap login'}`, "info");
+    }
+
+    function avatarChoose(i) {
+      appConfig.avatarMode = 'fixed';
+      appConfig.avatarFixed = i;
+      saveAppData();
+      avatarApply(i);
+      addLog(`Foto profil: ${AVATARS[i].name}`, "success");
+    }
+
+    function avatarRenderGrid() {
+      const grid = document.getElementById('avatarGrid');
+      if (!grid) return;
+      document.getElementById('avatarMode').value = appConfig.avatarMode === 'fixed' ? 'fixed' : 'random';
+      grid.innerHTML = '';
+      AVATARS.forEach((a, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'avatar-opt' + (i === avatarShown ? ' active' : '');
+        b.title = a.name;
+        b.setAttribute('aria-label', 'Pilih foto profil ' + a.name);
+        b.onclick = () => avatarChoose(i);
+        const im = document.createElement('img');
+        im.src = a.src; im.alt = '';
+        b.appendChild(im);
+        grid.appendChild(b);
+      });
+    }
+
+    // TAMPILAN HP: buka/tutup panel log
+    function toggleLogPanel() { document.querySelector('.activity-panel').classList.toggle('open'); }
+    document.addEventListener('contextmenu', (e) => { if (e.target.closest('.d-pad, .gripper-controls')) e.preventDefault(); });
 
     // INITIAL STARTUP
     window.onload = () => {
       loadSavedData();
+      avatarInit();
       initChart();
       parkingInit();
       gtInit();
